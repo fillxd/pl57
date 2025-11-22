@@ -1244,9 +1244,9 @@
             document.getElementById('routeProgress').textContent = `${progress}%`;
             document.getElementById('progressBar').style.width = `${progress}%`;
 
-            // Średnie opóźnienie
+            // Średnie opóźnienie - ZAOKRĄGLONE
             if (delayHistory.length > 0) {
-                const avgDelay = delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length;
+                const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
                 const avgMin = Math.floor(Math.abs(avgDelay) / 60);
                 const avgSec = Math.abs(avgDelay) % 60;
                 const sign = avgDelay >= 0 ? '-' : '+';
@@ -1317,29 +1317,36 @@
                 const indicatorEl = document.getElementById('delayIndicator');
                 timerEl.textContent = timeStr;
 
-                // KOLORY według wymagań:
-                if (diff < -60) {
+                // POPRAWIONE KOLORY:
+                // diff < 60 = DO MINUTY OPÓŹNIENIA (przed czasem lub do 59 sek opóźnienia) - ZIELONE
+                // diff >= 60 && diff < 120 = POWYŻEJ MINUTY DO 2 MINUT - ŻÓŁTE
+                // diff >= 120 && diff < 300 = OD 2 DO 5 MINUT - POMARAŃCZOWE
+                // diff >= 300 = POWYŻEJ 5 MINUT - CZERWONE
+
+                if (diff < 60) {
+                    // DO MINUTY OPÓŹNIENIA - ZIELONE, BEZ NAPISU O OPÓŹNIENIU
                     timerEl.style.backgroundColor = '#4CAF50';
                     timerEl.style.color = '#fff';
-                    indicatorEl.textContent = '✅ PRZED CZASEM';
+                    if (diff < 0) {
+                        indicatorEl.textContent = '✅ PRZED CZASEM';
+                    } else {
+                        indicatorEl.textContent = '✅ NA CZAS';
+                    }
                     indicatorEl.style.color = '#4CAF50';
-                } else if (diff >= -60 && diff < -30) {
+                } else if (diff >= 60 && diff < 120) {
+                    // POWYŻEJ MINUTY DO 2 MINUT - ŻÓŁTE
                     timerEl.style.backgroundColor = '#FFEB3B';
                     timerEl.style.color = '#333';
-                    indicatorEl.textContent = '⚠️ ZBLIŻASZ SIĘ';
-                    indicatorEl.style.color = '#FFEB3B';
-                } else if (diff >= -30 && diff < 210) {
+                    indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
+                    indicatorEl.style.color = '#F9A825';
+                } else if (diff >= 120 && diff < 300) {
+                    // OD 2 DO 5 MINUT - POMARAŃCZOWE
                     timerEl.style.backgroundColor = '#FF9800';
                     timerEl.style.color = '#fff';
-                    if (diff < 0) {
-                        indicatorEl.textContent = '⏰ PRAWIE CZAS';
-                    } else if (diff < 60) {
-                        indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
-                    } else {
-                        indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
-                    }
+                    indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
                     indicatorEl.style.color = '#FF9800';
                 } else {
+                    // POWYŻEJ 5 MINUT - CZERWONE
                     timerEl.style.backgroundColor = '#F44336';
                     timerEl.style.color = '#fff';
                     indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
@@ -1349,7 +1356,7 @@
         }
 
         function departStop() {
-            if (!currentRoute) return; // Zabezpieczenie
+            if (!currentRoute) return;
 
             if (currentStopIndex >= currentRoute.stops.length - 1) {
                 alert('🏁 To był ostatni przystanek!');
@@ -1370,7 +1377,7 @@
             if (timerInterval) clearInterval(timerInterval);
             
             if (delayHistory.length > 0) {
-                const avgDelay = delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length;
+                const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
                 const avgMin = Math.floor(Math.abs(avgDelay) / 60);
                 const avgSec = Math.abs(avgDelay) % 60;
                 const sign = avgDelay >= 0 ? 'opóźnienia' : 'przed czasem';
