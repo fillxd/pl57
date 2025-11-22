@@ -1096,7 +1096,22 @@
                 }
             }
         });
-
+// SYNTEZA MOWY - ZAPOWIEDŹ PRZYSTANKU
+// SYNTEZA MOWY - ZAPOWIEDŹ PRZYSTANKU
+function announceNextStop() {
+    if (currentStopIndex >= currentRoute.stops.length - 1) return;
+    
+    const nextStop = currentRoute.stops[currentStopIndex + 1].name;
+    const message = `Linia ${currentRoute.lineNumber}. kierunek ${currentRoute.direction}. Następny przystanek: ${nextStop}`;
+    
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'pl-PL';
+    utterance.rate = 0.5; // prędkość mowy
+    utterance.pitch = 4.0;
+    utterance.volume = 1.0;
+    
+    window.speechSynthesis.speak(utterance);
+}
         function addStop() {
             const name = document.getElementById('stopName').value.trim();
             const minutes = parseInt(document.getElementById('stopMinutes').value) || 0;
@@ -1442,14 +1457,13 @@
         const scheduleList = document.getElementById('scheduleList');
         const currentItem = scheduleList.querySelector('.schedule-item.current');
         
-        if (currentItem) {
-            const itemTop = currentItem.offsetTop;
-            const listHeight = scheduleList.clientHeight;
-            const itemHeight = currentItem.clientHeight;
-            
-            scheduleList.scrollTop = itemTop - (listHeight / 2) + (itemHeight / 2);
+        if (currentItem && scheduleList) {
+            currentItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
-    }, 100);
+    }, 200);
 }
 
         function renderSchedule() {
@@ -1608,28 +1622,30 @@ if (seconds % 10 === 0) {
             updateDisplay();
         }
 
-        function departStop() {
-            if (!currentRoute) return;
+      function departStop() {
+    if (!currentRoute) return;
 
-            if (currentStopIndex >= currentRoute.stops.length - 1) {
-                playDepartSound();
-                vibrate();
-                alert('🏁 To był ostatni przystanek!');
-                endRoute();
-                return;
-            }
+    if (currentStopIndex >= currentRoute.stops.length - 1) {
+        playDepartSound();
+        vibrate();
+        alert('🏁 To był ostatni przystanek!');
+        endRoute();
+        return;
+    }
 
-            const now = new Date();
-            const plannedDeparture = plannedTimes[currentStopIndex];
-            const delay = Math.floor((now - plannedDeparture) / 1000);
-            delayHistory[currentStopIndex] = delay;
+    const now = new Date();
+    const plannedDeparture = plannedTimes[currentStopIndex];
+    const delay = Math.floor((now - plannedDeparture) / 1000);
+    delayHistory[currentStopIndex] = delay;
 
-            playDepartSound();
-            vibrate();
+    playDepartSound();
+    vibrate();
+    
+    announceNextStop(); // <-- DODAJ TĘ LINIĘ
 
-            currentStopIndex++;
-            updateDisplay();
-        }
+    currentStopIndex++;
+    updateDisplay();
+}
 
         function endRoute() {
             if (timerInterval) clearInterval(timerInterval);
