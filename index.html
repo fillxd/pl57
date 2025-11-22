@@ -41,11 +41,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
         @keyframes slideIn {
             from { transform: translateX(-100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -54,6 +49,11 @@
         @keyframes ledGlow {
             0%, 100% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
             50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .card {
@@ -80,6 +80,31 @@
             margin-bottom: 20px;
             color: #4CAF50;
             font-size: 1.5em;
+        }
+
+        /* ZEGAR W LEWYM GÓRNYM ROGU */
+        .live-clock {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            font-weight: bold;
+            color: #4CAF50;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            border: 2px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .clock-date {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 5px;
+            letter-spacing: 1px;
         }
 
         /* NOWY INTERFEJS DODAWANIA PRZYSTANKÓW */
@@ -139,6 +164,12 @@
             transform: translateY(0);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-primary {
             background: linear-gradient(45deg, #4CAF50, #8BC34A);
             color: white;
@@ -151,6 +182,11 @@
 
         .btn-danger {
             background: linear-gradient(45deg, #f44336, #e91e63);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #FF9800, #FFC107);
             color: white;
         }
 
@@ -285,6 +321,31 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
+        }
+
+        /* ETA BADGE */
+        .eta-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+        }
+
+        .eta-label {
+            font-size: 10px;
+            color: #ddd;
+            text-transform: uppercase;
+        }
+
+        .eta-time {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
         }
 
         .line-info {
@@ -294,7 +355,6 @@
             color: #FFA500;
             margin-bottom: 20px;
             letter-spacing: 3px;
-            animation: ledGlow 2s infinite;
         }
 
         .next-stop-label {
@@ -316,7 +376,6 @@
             background: linear-gradient(45deg, #FFD700, #FFA500);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: pulse 2s infinite, ledGlow 2s infinite;
             line-height: 1.2;
         }
 
@@ -389,16 +448,23 @@
             font-family: 'Orbitron', monospace;
         }
 
-        /* CONTROLS - teraz na dole głównego wyświetlacza */
+        /* CONTROLS - NOWY UKŁAD Z STRZAŁKAMI */
         .controls {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: auto 1fr auto 1fr;
             gap: 15px;
         }
 
         .controls button {
             padding: 20px;
             font-size: 18px;
+        }
+
+        .controls .btn-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            border-radius: 50%;
         }
 
         /* PROGRESS BAR */
@@ -438,6 +504,7 @@
             overflow-y: auto;
             flex: 1;
             padding-right: 5px;
+            scroll-behavior: smooth;
         }
 
         .schedule-list::-webkit-scrollbar {
@@ -465,12 +532,12 @@
             align-items: center;
             border-left: 3px solid #666;
             transition: all 0.3s;
+            animation: slideDown 0.3s;
         }
 
         .schedule-item.current {
             background: linear-gradient(90deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));
             border-left-color: #4CAF50;
-            animation: pulse 2s infinite;
         }
 
         .schedule-item.passed {
@@ -496,7 +563,6 @@
 
         .schedule-item.current .schedule-stop-number {
             background: #4CAF50;
-            animation: pulse 1s infinite;
         }
 
         .schedule-stop-info {
@@ -514,11 +580,21 @@
             color: #888;
         }
 
+        .schedule-time-info {
+            text-align: right;
+        }
+
         .schedule-time {
             font-family: 'Orbitron', monospace;
             font-size: 16px;
             font-weight: bold;
-            text-align: right;
+        }
+
+        .estimated-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            color: #FFA500;
+            margin-top: 3px;
         }
 
         .delay-badge {
@@ -682,7 +758,6 @@
             border-radius: 10px;
             font-size: 14px;
             font-weight: bold;
-            animation: pulse 2s infinite;
             z-index: 999;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
@@ -700,6 +775,11 @@
             
             .current-stop {
                 font-size: 42px;
+            }
+
+            .live-clock {
+                font-size: 20px;
+                padding: 10px 15px;
             }
         }
 
@@ -726,16 +806,21 @@
             .input-group {
                 grid-template-columns: 1fr;
             }
-            
-            .controls {
-                grid-template-columns: 1fr;
-            }
 
             .keyboard-hint {
                 bottom: 10px;
                 right: 10px;
                 font-size: 12px;
                 padding: 8px 15px;
+            }
+
+            .live-clock {
+                font-size: 18px;
+                padding: 8px 12px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -753,10 +838,21 @@
             .line-info {
                 font-size: 18px;
             }
+
+            .live-clock {
+                font-size: 16px;
+                padding: 6px 10px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- ZEGAR NA ŻYWO -->
+    <div class="live-clock" id="liveClock">
+        <div id="clockTime">00:00:00</div>
+        <div class="clock-date" id="clockDate">Pon, 1 Sty 2024</div>
+    </div>
+
     <div class="container">
         <!-- EKRAN KONFIGURACJI -->
         <div class="setup-screen active">
@@ -796,11 +892,17 @@
 
         <!-- EKRAN DZIAŁANIA - NOWY LAYOUT -->
         <div class="running-screen">
-            <div class="keyboard-hint">⌨️ Naciśnij ENTER aby odjechać</div>
+            <div class="keyboard-hint">⌨️ ENTER/SPACJA = Następny | ← = Cofnij | ESC = Zakończ</div>
             <div class="running-layout">
                 <!-- LEWA KOLUMNA - GŁÓWNY WYŚWIETLACZ -->
                 <div class="main-display-column">
                     <div class="bus-display">
+                        <!-- ETA DO KOŃCA TRASY -->
+                        <div class="eta-badge" id="etaBadge">
+                            <div class="eta-label">Koniec trasy o</div>
+                            <div class="eta-time" id="etaTime">--:--</div>
+                        </div>
+
                         <div class="line-info" id="lineInfo">LINIA 1 → CENTRUM</div>
                         <div class="next-stop-label">🚏 Następny przystanek</div>
                         <div class="current-stop" id="currentStopName">DWORZEC GŁÓWNY</div>
@@ -812,11 +914,17 @@
                     </div>
 
                     <div class="controls">
+                        <button class="btn-warning btn-icon" onclick="previousStop()" id="prevBtn" title="Cofnij (←)">
+                            ◀
+                        </button>
                         <button class="btn-primary" onclick="departStop()">
-                            🚀 ODJAZD Z PRZYSTANKU
+                            🚀 ODJAZD
+                        </button>
+                        <button class="btn-primary btn-icon" onclick="departStop()" title="Następny (ENTER/SPACJA)">
+                            ▶
                         </button>
                         <button class="btn-danger" onclick="endRoute()">
-                            ⏹️ ZAKOŃCZ TRASĘ
+                            ⏹️ KONIEC
                         </button>
                     </div>
                 </div>
@@ -904,32 +1012,83 @@
         let currentStopIndex = 0;
         let plannedTimes = [];
         let timerInterval = null;
+        let clockInterval = null;
         let delayHistory = [];
         let selectedRouteId = null;
 
-        // GLOBALNY LISTENER NA KLAWISZ ENTER
+        // ZEGAR NA ŻYWO
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clockTime').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const days = ['Nie', 'Pon', 'Wto', 'Śro', 'Czw', 'Pią', 'Sob'];
+            const months = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
+            const dayName = days[now.getDay()];
+            const day = now.getDate();
+            const month = months[now.getMonth()];
+            const year = now.getFullYear();
+            
+            document.getElementById('clockDate').textContent = `${dayName}, ${day} ${month} ${year}`;
+        }
+
+        updateClock();
+        clockInterval = setInterval(updateClock, 1000);
+
+        // DŹWIĘK PRZY ODJEZDZIE
+        function playDepartSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // WIBRACJE
+        function vibrate() {
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        }
+
+        // GLOBALNY LISTENER NA KLAWISZE
         document.addEventListener('keydown', function(event) {
-            // Sprawdź czy to Enter
-            if (event.key === 'Enter') {
-                // Sprawdź czy jesteśmy na ekranie działania
+            if (event.key === 'Enter' || event.code === 'Space') {
                 if (document.querySelector('.running-screen').classList.contains('active')) {
                     event.preventDefault();
                     departStop();
                 }
-                // Sprawdź czy jesteśmy w inputach przystanków
                 else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
                     event.preventDefault();
                     addStop();
                 }
             }
             
-            // SPACJA też może służyć do odjazdu
-            if (event.code === 'Space' && document.querySelector('.running-screen').classList.contains('active')) {
+            // STRZAŁKA W LEWO = COFNIJ
+            if (event.key === 'ArrowLeft' && document.querySelector('.running-screen').classList.contains('active')) {
+                event.preventDefault();
+                previousStop();
+            }
+            
+            // STRZAŁKA W PRAWO = NASTĘPNY
+            if (event.key === 'ArrowRight' && document.querySelector('.running-screen').classList.contains('active')) {
                 event.preventDefault();
                 departStop();
             }
             
-            // ESC do zakończenia trasy
             if (event.key === 'Escape' && document.querySelector('.running-screen').classList.contains('active')) {
                 event.preventDefault();
                 if (confirm('Czy na pewno zakończyć trasę?')) {
@@ -990,7 +1149,6 @@
                     <button class="btn-danger btn-icon" onclick="removeStop(${index})">🗑️</button>
                 `;
                 
-                // Drag & Drop
                 div.addEventListener('dragstart', handleDragStart);
                 div.addEventListener('dragover', handleDragOver);
                 div.addEventListener('drop', handleDrop);
@@ -1179,7 +1337,6 @@
                 selectedRouteId = routeId;
                 currentRoute = snapshot.val();
                 
-                // Pokaż modal wyboru czasu
                 const now = new Date();
                 document.getElementById('hourInput').value = String(now.getHours()).padStart(2, '0');
                 document.getElementById('minuteInput').value = String(now.getMinutes()).padStart(2, '0');
@@ -1205,7 +1362,6 @@
                 return;
             }
 
-            // Oblicz planowane czasy
             const startDate = new Date();
             startDate.setHours(hours, minutes, 0, 0);
             
@@ -1221,13 +1377,19 @@
             currentStopIndex = 0;
             delayHistory = [];
 
-            // Przełącz na ekran działania
             document.getElementById('timeModal').classList.remove('active');
             document.querySelector('.setup-screen').classList.remove('active');
             document.querySelector('.running-screen').classList.add('active');
 
             updateDisplay();
             startTimer();
+        }
+
+        // FUNKCJA OBLICZAJĄCA AKTUALNE OPÓŹNIENIE
+        function getCurrentDelay() {
+            const now = new Date();
+            const targetTime = plannedTimes[currentStopIndex];
+            return Math.floor((now - targetTime) / 1000); // w sekundach
         }
 
         function updateDisplay() {
@@ -1244,7 +1406,7 @@
             document.getElementById('routeProgress').textContent = `${progress}%`;
             document.getElementById('progressBar').style.width = `${progress}%`;
 
-            // Średnie opóźnienie - ZAOKRĄGLONE
+            // Średnie opóźnienie
             if (delayHistory.length > 0) {
                 const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
                 const avgMin = Math.floor(Math.abs(avgDelay) / 60);
@@ -1252,14 +1414,51 @@
                 const sign = avgDelay >= 0 ? '-' : '+';
                 document.getElementById('avgDelay').textContent = 
                     `${sign}${avgMin}:${String(avgSec).padStart(2, '0')}`;
+            } else {
+                document.getElementById('avgDelay').textContent = '0:00';
             }
 
+            // Przycisk cofnij
+            document.getElementById('prevBtn').disabled = (currentStopIndex === 0);
+
+            updateETA();
             renderSchedule();
+        }
+
+        function updateETA() {
+            // Użyj aktualnego opóźnienia jeśli jesteśmy na trasie
+            const currentDelay = getCurrentDelay();
+            
+            const lastStopPlannedTime = plannedTimes[plannedTimes.length - 1];
+            const etaTime = new Date(lastStopPlannedTime.getTime() + currentDelay * 1000);
+            
+            const hours = String(etaTime.getHours()).padStart(2, '0');
+            const minutes = String(etaTime.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
+        }
+
+        function scrollToCurrentStop() {
+            setTimeout(() => {
+                const scheduleList = document.getElementById('scheduleList');
+                const currentItem = scheduleList.querySelector('.schedule-item.current');
+                
+                if (currentItem) {
+                    const itemTop = currentItem.offsetTop;
+                    const listHeight = scheduleList.clientHeight;
+                    const itemHeight = currentItem.clientHeight;
+                    
+                    scheduleList.scrollTop = itemTop - (listHeight / 2) + (itemHeight / 2);
+                }
+            }, 100);
         }
 
         function renderSchedule() {
             const scheduleDiv = document.getElementById('scheduleList');
             scheduleDiv.innerHTML = '';
+
+            // UŻYJ AKTUALNEGO OPÓŹNIENIA dla prognoz
+            const currentDelay = getCurrentDelay();
 
             currentRoute.stops.forEach((stop, index) => {
                 const div = document.createElement('div');
@@ -1276,6 +1475,19 @@
                 const time = plannedTimes[index];
                 const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
                 
+                // PRZEWIDYWANA GODZINA - używamy aktualnego opóźnienia dla wszystkich przyszłych przystanków
+                let estimatedTimeStr = '';
+                if (index >= currentStopIndex) {
+                    const estimatedTime = new Date(time.getTime() + currentDelay * 1000);
+                    const estHours = String(estimatedTime.getHours()).padStart(2, '0');
+                    const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                    
+                    // Pokaż tylko jeśli jest różnica
+                    if (Math.abs(currentDelay) >= 30) { // pokaż jeśli różnica >= 30 sekund
+                        estimatedTimeStr = `<div class="estimated-time">~${estHours}:${estMinutes}</div>`;
+                    }
+                }
+
                 let delayBadge = '';
                 if (index < currentStopIndex && delayHistory[index] !== undefined) {
                     const delay = delayHistory[index];
@@ -1292,7 +1504,10 @@
                         <div class="schedule-stop-name">${stop.name}</div>
                         <div class="schedule-stop-time">${index > 0 ? `+${stop.minutes} min` : 'START'}</div>
                     </div>
-                    <div class="schedule-time">${timeStr}</div>
+                    <div class="schedule-time-info">
+                        <div class="schedule-time">${timeStr}</div>
+                        ${estimatedTimeStr}
+                    </div>
                     ${delayBadge}
                 `;
                 scheduleDiv.appendChild(div);
@@ -1317,14 +1532,7 @@
                 const indicatorEl = document.getElementById('delayIndicator');
                 timerEl.textContent = timeStr;
 
-                // POPRAWIONE KOLORY:
-                // diff < 60 = DO MINUTY OPÓŹNIENIA (przed czasem lub do 59 sek opóźnienia) - ZIELONE
-                // diff >= 60 && diff < 120 = POWYŻEJ MINUTY DO 2 MINUT - ŻÓŁTE
-                // diff >= 120 && diff < 300 = OD 2 DO 5 MINUT - POMARAŃCZOWE
-                // diff >= 300 = POWYŻEJ 5 MINUT - CZERWONE
-
                 if (diff < 60) {
-                    // DO MINUTY OPÓŹNIENIA - ZIELONE, BEZ NAPISU O OPÓŹNIENIU
                     timerEl.style.backgroundColor = '#4CAF50';
                     timerEl.style.color = '#fff';
                     if (diff < 0) {
@@ -1334,31 +1542,79 @@
                     }
                     indicatorEl.style.color = '#4CAF50';
                 } else if (diff >= 60 && diff < 120) {
-                    // POWYŻEJ MINUTY DO 2 MINUT - ŻÓŁTE
                     timerEl.style.backgroundColor = '#FFEB3B';
                     timerEl.style.color = '#333';
                     indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
                     indicatorEl.style.color = '#F9A825';
                 } else if (diff >= 120 && diff < 300) {
-                    // OD 2 DO 5 MINUT - POMARAŃCZOWE
                     timerEl.style.backgroundColor = '#FF9800';
                     timerEl.style.color = '#fff';
                     indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
                     indicatorEl.style.color = '#FF9800';
                 } else {
-                    // POWYŻEJ 5 MINUT - CZERWONE
                     timerEl.style.backgroundColor = '#F44336';
                     timerEl.style.color = '#fff';
                     indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
                     indicatorEl.style.color = '#F44336';
                 }
+
+                // Aktualizuj ETA i rozkład co sekundę
+                updateETA();
+                
+                // Odśwież rozkład co 5 sekund (żeby nie było za dużo rerenderów)
+                // Aktualizuj tylko przewidywane czasy co 10 sekund
+if (seconds % 10 === 0) {
+    // Tylko aktualizuj istniejące elementy, nie renderuj od nowa
+    const currentDelay = getCurrentDelay();
+    document.querySelectorAll('.schedule-item').forEach((item, index) => {
+        if (index >= currentStopIndex) {
+            const timeInfo = item.querySelector('.schedule-time-info');
+            const time = plannedTimes[index];
+            if (Math.abs(currentDelay) >= 30) {
+                const estimatedTime = new Date(time.getTime() + currentDelay * 1000);
+                const estHours = String(estimatedTime.getHours()).padStart(2, '0');
+                const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                
+                let estEl = timeInfo.querySelector('.estimated-time');
+                if (estEl) {
+                    estEl.textContent = `~${estHours}:${estMinutes}`;
+                } else if (!estEl) {
+                    estEl = document.createElement('div');
+                    estEl.className = 'estimated-time';
+                    estEl.textContent = `~${estHours}:${estMinutes}`;
+                    timeInfo.appendChild(estEl);
+                }
+            }
+        }
+    });
+}
             }, 100);
+        }
+
+        // COFNIJ DO POPRZEDNIEGO PRZYSTANKU
+        function previousStop() {
+            if (currentStopIndex === 0) {
+                return; // Nie można cofnąć się z pierwszego przystanku
+            }
+
+            vibrate();
+            
+            currentStopIndex--;
+            
+            // Usuń ostatnie opóźnienie z historii
+            if (delayHistory.length > currentStopIndex) {
+                delayHistory.pop();
+            }
+
+            updateDisplay();
         }
 
         function departStop() {
             if (!currentRoute) return;
 
             if (currentStopIndex >= currentRoute.stops.length - 1) {
+                playDepartSound();
+                vibrate();
                 alert('🏁 To był ostatni przystanek!');
                 endRoute();
                 return;
@@ -1368,6 +1624,9 @@
             const plannedDeparture = plannedTimes[currentStopIndex];
             const delay = Math.floor((now - plannedDeparture) / 1000);
             delayHistory[currentStopIndex] = delay;
+
+            playDepartSound();
+            vibrate();
 
             currentStopIndex++;
             updateDisplay();
@@ -1404,6 +1663,7 @@
         window.setCurrentTime = setCurrentTime;
         window.confirmStartTime = confirmStartTime;
         window.departStop = departStop;
+        window.previousStop = previousStop;
         window.endRoute = endRoute;
     </script>
 </body>
