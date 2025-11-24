@@ -385,9 +385,9 @@
         }
 
         .timer {
-    text-align: center;
-    font-family: 'Orbitron', monospace;
-    font-size: 90px;  /* <-- MNIEJSZY */
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 90px;
             font-weight: 900;
             padding: 40px;
             border-radius: 20px;
@@ -685,7 +685,7 @@
 
         .route-actions {
             display: grid;
-            grid-template-columns: 1fr auto auto;
+            grid-template-columns: 1fr auto auto auto;
             gap: 10px;
         }
 
@@ -768,8 +768,8 @@
                 grid-template-columns: 1fr 350px;
             }
             
-             .timer {
-        font-size: 70px;
+            .timer {
+                font-size: 70px;
                 padding: 30px;
             }
             
@@ -794,8 +794,8 @@
                 max-height: 500px;
             }
             
-             .timer {
-        font-size: 55px;
+            .timer {
+                font-size: 55px;
                 padding: 30px;
             }
             
@@ -879,7 +879,7 @@
                     </div>
                 </div>
                 
-                <button class="btn-primary" onclick="saveRoute()" style="margin-top: 20px; width: 100%;">
+                <button class="btn-primary" id="saveRouteBtn" onclick="saveRoute()" style="margin-top: 20px; width: 100%;">
                     💾 Zapisz linię do Firebase
                 </button>
             </div>
@@ -1015,6 +1015,7 @@
         let clockInterval = null;
         let delayHistory = [];
         let selectedRouteId = null;
+        let editingRouteId = null; // ID edytowanej trasy
 
         // ZEGAR NA ŻYWO
         function updateClock() {
@@ -1064,31 +1065,30 @@
             }
         }
 
-      document.addEventListener('keydown', function(event) {
-    // ENTER dodaje przystanek z obu pól
-    if (event.key === 'Enter') {
-        if (document.querySelector('.running-screen').classList.contains('active')) {
-            event.preventDefault();
-            departStop();
-        }
-        else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
-            event.preventDefault();
-            addStop();
-        }
-    }
-    
-    // SPACJA dodaje przystanek TYLKO z pola numerycznego, NIE z nazwy przystanku
-    if (event.code === 'Space') {
-        if (document.querySelector('.running-screen').classList.contains('active')) {
-            event.preventDefault();
-            departStop();
-        }
-        else if (event.target.id === 'stopMinutes') {  // ⬅️ TYLKO to pole!
-            event.preventDefault();
-            addStop();
-        }
-        // Jeśli jesteś w stopName - spacja działa normalnie (nie preventDefault)
-    }
+        document.addEventListener('keydown', function(event) {
+            // ENTER dodaje przystanek z obu pól
+            if (event.key === 'Enter') {
+                if (document.querySelector('.running-screen').classList.contains('active')) {
+                    event.preventDefault();
+                    departStop();
+                }
+                else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
+                    event.preventDefault();
+                    addStop();
+                }
+            }
+            
+            // SPACJA dodaje przystanek TYLKO z pola numerycznego, NIE z nazwy przystanku
+            if (event.code === 'Space') {
+                if (document.querySelector('.running-screen').classList.contains('active')) {
+                    event.preventDefault();
+                    departStop();
+                }
+                else if (event.target.id === 'stopMinutes') {
+                    event.preventDefault();
+                    addStop();
+                }
+            }
             
             // STRZAŁKA W LEWO = COFNIJ
             if (event.key === 'ArrowLeft' && document.querySelector('.running-screen').classList.contains('active')) {
@@ -1109,22 +1109,7 @@
                 }
             }
         });
-// SYNTEZA MOWY - ZAPOWIEDŹ PRZYSTANKU
-// SYNTEZA MOWY - ZAPOWIEDŹ PRZYSTANKU
-function announceNextStop() {
-    if (currentStopIndex >= currentRoute.stops.length - 1) return;
-    
-    const nextStop = currentRoute.stops[currentStopIndex + 1].name;
-    const message = `Linia ${currentRoute.lineNumber}. kierunek ${currentRoute.direction}. Następny przystanek: ${nextStop}`;
-    
-    const utterance = new SpeechSynthesisUtterance(message);
-    utterance.lang = 'pl-PL';
-    utterance.rate = 0.5; // prędkość mowy
-    utterance.pitch = 4.0;
-    utterance.volume = 1.0;
-    
-    window.speechSynthesis.speak(utterance);
-}
+
         function addStop() {
             const name = document.getElementById('stopName').value.trim();
             const minutes = parseInt(document.getElementById('stopMinutes').value) || 0;
@@ -1282,6 +1267,82 @@ function announceNextStop() {
             }
         }
 
+        // ========== NOWA FUNKCJA: EDYCJA TRASY ==========
+        async function editRoute(id) {
+            try {
+                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
+                if (!snapshot.exists()) return;
+
+                const route = snapshot.val();
+                
+                // Załaduj do formularza
+                stops = [...route.stops];
+                document.getElementById('lineNumber').value = route.lineNumber;
+                document.getElementById('direction').value = route.direction;
+                renderStopList();
+                
+                // Zapisz ID edytowanej trasy
+                editingRouteId = id;
+                
+                // Zmień przycisk "Zapisz" na "Zapisz zmiany"
+                const saveBtn = document.getElementById('saveRouteBtn');
+                saveBtn.textContent = '💾 Zapisz zmiany';
+                saveBtn.onclick = () => updateRoute(id);
+                
+                alert('✏️ Trasa załadowana do edycji. Po zakończeniu kliknij "Zapisz zmiany".');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('Błąd edycji:', error);
+                alert('❌ Błąd podczas ładowania trasy!');
+            }
+        }
+
+        // ========== NOWA FUNKCJA: AKTUALIZACJA TRASY ==========
+        async function updateRoute(id) {
+            const lineNumber = document.getElementById('lineNumber').value.trim();
+            const direction = document.getElementById('direction').value.trim();
+
+            if (!lineNumber || !direction) {
+                alert('❌ Podaj numer linii i kierunek!');
+                return;
+            }
+
+            if (stops.length < 2) {
+                alert('❌ Dodaj co najmniej 2 przystanki!');
+                return;
+            }
+
+            const route = {
+                lineNumber,
+                direction,
+                stops: [...stops],
+                created: new Date().toISOString()
+            };
+
+            try {
+                await window.dbSet(window.dbRef(window.database, `routes/${id}`), route);
+                
+                alert('✅ Linia zaktualizowana pomyślnie!');
+                
+                // Reset
+                stops = [];
+                document.getElementById('lineNumber').value = '';
+                document.getElementById('direction').value = '';
+                renderStopList();
+                editingRouteId = null;
+                
+                // Przywróć normalny przycisk
+                const saveBtn = document.getElementById('saveRouteBtn');
+                saveBtn.textContent = '💾 Zapisz linię do Firebase';
+                saveBtn.onclick = saveRoute;
+                
+                loadRoutes();
+            } catch (error) {
+                console.error('Błąd zapisu:', error);
+                alert('❌ Błąd podczas zapisu!');
+            }
+        }
+
         async function loadRoutes() {
             try {
                 const snapshot = await window.dbGet(window.dbRef(window.database, 'routes'));
@@ -1309,6 +1370,7 @@ function announceNextStop() {
                             </div>
                             <div class="route-actions">
                                 <button class="btn-primary" onclick="startRoute('${id}')">▶️ URUCHOM</button>
+                                <button class="btn-warning" onclick="editRoute('${id}')">✏️ EDYTUJ</button>
                                 <button class="btn-secondary" onclick="duplicateRoute('${id}')">📋</button>
                                 <button class="btn-danger" onclick="deleteRoute('${id}')">🗑️</button>
                             </div>
@@ -1420,71 +1482,96 @@ function announceNextStop() {
             return Math.floor((now - targetTime) / 1000); // w sekundach
         }
 
-        function updateDisplay() {
-    document.getElementById('lineInfo').textContent = 
-        `LINIA ${currentRoute.lineNumber} → ${currentRoute.direction.toUpperCase()}`;
-    
-    document.getElementById('currentStopName').textContent = 
-        currentRoute.stops[currentStopIndex].name.toUpperCase();
-
-    const total = currentRoute.stops.length;
-    const progress = Math.round((currentStopIndex / (total - 1)) * 100);
-    
-    document.getElementById('stopCounter').textContent = `${currentStopIndex + 1}/${total}`;
-    document.getElementById('routeProgress').textContent = `${progress}%`;
-    document.getElementById('progressBar').style.width = `${progress}%`;
-
-    if (delayHistory.length > 0) {
-        const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
-        const avgMin = Math.floor(Math.abs(avgDelay) / 60);
-        const avgSec = Math.abs(avgDelay) % 60;
-        const sign = avgDelay >= 0 ? '-' : '+';
-        document.getElementById('avgDelay').textContent = 
-            `${sign}${avgMin}:${String(avgSec).padStart(2, '0')}`;
-    } else {
-        document.getElementById('avgDelay').textContent = '0:00';
-    }
-
-    document.getElementById('prevBtn').disabled = (currentStopIndex === 0);
-
-    updateETA();
-    renderSchedule();
-    scrollToCurrentStop();  // <-- DODAJ TĘ LINIĘ TUTAJ
-}
-
-        function updateETA() {
-            // Użyj aktualnego opóźnienia jeśli jesteśmy na trasie
+        // ========== POPRAWIONA FUNKCJA: OBLICZANIE PRZEWIDYWANEGO CZASU ==========
+        function getEstimatedArrivalTime(stopIndex) {
+            if (stopIndex <= currentStopIndex) {
+                return null; // przeszłe przystanki nie mają przewidywanego czasu
+            }
+            
             const currentDelay = getCurrentDelay();
             
-            const lastStopPlannedTime = plannedTimes[plannedTimes.length - 1];
-            const etaTime = new Date(lastStopPlannedTime.getTime() + currentDelay * 1000);
+            // Jeśli jesteśmy przed czasem, NIE pokazuj przewidywanego czasu
+            if (currentDelay < 0) {
+                return null;
+            }
             
-            const hours = String(etaTime.getHours()).padStart(2, '0');
-            const minutes = String(etaTime.getMinutes()).padStart(2, '0');
+            // Oblicz ile minut od TERAZ do tego przystanku
+            let minutesFromNow = 0;
+            for (let i = currentStopIndex + 1; i <= stopIndex; i++) {
+                minutesFromNow += currentRoute.stops[i].minutes;
+            }
             
-            document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
+            const now = new Date();
+            return new Date(now.getTime() + minutesFromNow * 60000);
+        }
+
+        function updateDisplay() {
+            document.getElementById('lineInfo').textContent = 
+                `LINIA ${currentRoute.lineNumber} → ${currentRoute.direction.toUpperCase()}`;
+            
+            document.getElementById('currentStopName').textContent = 
+                currentRoute.stops[currentStopIndex].name.toUpperCase();
+
+            const total = currentRoute.stops.length;
+            const progress = Math.round((currentStopIndex / (total - 1)) * 100);
+            
+            document.getElementById('stopCounter').textContent = `${currentStopIndex + 1}/${total}`;
+            document.getElementById('routeProgress').textContent = `${progress}%`;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+
+            if (delayHistory.length > 0) {
+                const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
+                const avgMin = Math.floor(Math.abs(avgDelay) / 60);
+                const avgSec = Math.abs(avgDelay) % 60;
+                const sign = avgDelay >= 0 ? '-' : '+';
+                document.getElementById('avgDelay').textContent = 
+                    `${sign}${avgMin}:${String(avgSec).padStart(2, '0')}`;
+            } else {
+                document.getElementById('avgDelay').textContent = '0:00';
+            }
+
+            document.getElementById('prevBtn').disabled = (currentStopIndex === 0);
+
+            updateETA();
+            renderSchedule();
+            scrollToCurrentStop();
+        }
+
+        function updateETA() {
+            // Oblicz ETA dla ostatniego przystanku
+            const lastStopIndex = plannedTimes.length - 1;
+            const estimatedTime = getEstimatedArrivalTime(lastStopIndex);
+            
+            if (estimatedTime) {
+                const hours = String(estimatedTime.getHours()).padStart(2, '0');
+                const minutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
+            } else {
+                // Jeśli nie ma opóźnienia, pokaż planowany czas
+                const plannedTime = plannedTimes[lastStopIndex];
+                const hours = String(plannedTime.getHours()).padStart(2, '0');
+                const minutes = String(plannedTime.getMinutes()).padStart(2, '0');
+                document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
+            }
         }
 
         function scrollToCurrentStop() {
-    setTimeout(() => {
-        const scheduleList = document.getElementById('scheduleList');
-        const currentItem = scheduleList.querySelector('.schedule-item.current');
-        
-        if (currentItem && scheduleList) {
-            currentItem.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
+            setTimeout(() => {
+                const scheduleList = document.getElementById('scheduleList');
+                const currentItem = scheduleList.querySelector('.schedule-item.current');
+                
+                if (currentItem && scheduleList) {
+                    currentItem.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }, 200);
         }
-    }, 200);
-}
 
         function renderSchedule() {
             const scheduleDiv = document.getElementById('scheduleList');
             scheduleDiv.innerHTML = '';
-
-            // UŻYJ AKTUALNEGO OPÓŹNIENIA dla prognoz
-            const currentDelay = getCurrentDelay();
 
             currentRoute.stops.forEach((stop, index) => {
                 const div = document.createElement('div');
@@ -1501,15 +1588,14 @@ function announceNextStop() {
                 const time = plannedTimes[index];
                 const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
                 
-                // PRZEWIDYWANA GODZINA - używamy aktualnego opóźnienia dla wszystkich przyszłych przystanków
+                // ========== POPRAWIONE PRZEWIDYWANIE CZASU ==========
                 let estimatedTimeStr = '';
-                if (index >= currentStopIndex) {
-                    const estimatedTime = new Date(time.getTime() + currentDelay * 1000);
-                    const estHours = String(estimatedTime.getHours()).padStart(2, '0');
-                    const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                if (index > currentStopIndex) {
+                    const estimatedTime = getEstimatedArrivalTime(index);
                     
-                    // Pokaż tylko jeśli jest różnica
-                    if (Math.abs(currentDelay) >= 30) { // pokaż jeśli różnica >= 30 sekund
+                    if (estimatedTime) {
+                        const estHours = String(estimatedTime.getHours()).padStart(2, '0');
+                        const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
                         estimatedTimeStr = `<div class="estimated-time">~${estHours}:${estMinutes}</div>`;
                     }
                 }
@@ -1584,50 +1670,25 @@ function announceNextStop() {
                     indicatorEl.style.color = '#F44336';
                 }
 
-                // Aktualizuj ETA i rozkład co sekundę
                 updateETA();
                 
-                // Odśwież rozkład co 5 sekund (żeby nie było za dużo rerenderów)
-                // Aktualizuj tylko przewidywane czasy co 10 sekund
-if (seconds % 10 === 0) {
-    // Tylko aktualizuj istniejące elementy, nie renderuj od nowa
-    const currentDelay = getCurrentDelay();
-    document.querySelectorAll('.schedule-item').forEach((item, index) => {
-        if (index >= currentStopIndex) {
-            const timeInfo = item.querySelector('.schedule-time-info');
-            const time = plannedTimes[index];
-            if (Math.abs(currentDelay) >= 30) {
-                const estimatedTime = new Date(time.getTime() + currentDelay * 1000);
-                const estHours = String(estimatedTime.getHours()).padStart(2, '0');
-                const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
-                
-                let estEl = timeInfo.querySelector('.estimated-time');
-                if (estEl) {
-                    estEl.textContent = `~${estHours}:${estMinutes}`;
-                } else if (!estEl) {
-                    estEl = document.createElement('div');
-                    estEl.className = 'estimated-time';
-                    estEl.textContent = `~${estHours}:${estMinutes}`;
-                    timeInfo.appendChild(estEl);
+                // Aktualizuj tylko przewidywane czasy co 5 sekund
+                if (seconds % 5 === 0) {
+                    renderSchedule();
                 }
-            }
-        }
-    });
-}
             }, 100);
         }
 
         // COFNIJ DO POPRZEDNIEGO PRZYSTANKU
         function previousStop() {
             if (currentStopIndex === 0) {
-                return; // Nie można cofnąć się z pierwszego przystanku
+                return;
             }
 
             vibrate();
             
             currentStopIndex--;
             
-            // Usuń ostatnie opóźnienie z historii
             if (delayHistory.length > currentStopIndex) {
                 delayHistory.pop();
             }
@@ -1635,30 +1696,30 @@ if (seconds % 10 === 0) {
             updateDisplay();
         }
 
-      function departStop() {
-    if (!currentRoute) return;
+        function departStop() {
+            if (!currentRoute) return;
 
-    if (currentStopIndex >= currentRoute.stops.length - 1) {
-        playDepartSound();
-        vibrate();
-        alert('🏁 To był ostatni przystanek!');
-        endRoute();
-        return;
-    }
+            if (currentStopIndex >= currentRoute.stops.length - 1) {
+                playDepartSound();
+                vibrate();
+                alert('🏁 To był ostatni przystanek!');
+                endRoute();
+                return;
+            }
 
-    const now = new Date();
-    const plannedDeparture = plannedTimes[currentStopIndex];
-    const delay = Math.floor((now - plannedDeparture) / 1000);
-    delayHistory[currentStopIndex] = delay;
+            const now = new Date();
+            const plannedDeparture = plannedTimes[currentStopIndex];
+            const delay = Math.floor((now - plannedDeparture) / 1000);
+            delayHistory[currentStopIndex] = delay;
 
-    playDepartSound();
-    vibrate();
-    
-    announceNextStop(); // <-- DODAJ TĘ LINIĘ
+            playDepartSound();
+            vibrate();
+            
+            // USUNIĘTO: announceNextStop(); - brak syntesy mowy
 
-    currentStopIndex++;
-    updateDisplay();
-}
+            currentStopIndex++;
+            updateDisplay();
+        }
 
         function endRoute() {
             if (timerInterval) clearInterval(timerInterval);
@@ -1685,6 +1746,8 @@ if (seconds % 10 === 0) {
         window.editStop = editStop;
         window.removeStop = removeStop;
         window.saveRoute = saveRoute;
+        window.editRoute = editRoute; // NOWA
+        window.updateRoute = updateRoute; // NOWA
         window.deleteRoute = deleteRoute;
         window.duplicateRoute = duplicateRoute;
         window.startRoute = startRoute;
