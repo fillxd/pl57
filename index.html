@@ -1064,18 +1064,31 @@
             }
         }
 
-        // GLOBALNY LISTENER NA KLAWISZE
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' || event.code === 'Space') {
-                if (document.querySelector('.running-screen').classList.contains('active')) {
-                    event.preventDefault();
-                    departStop();
-                }
-                else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
-                    event.preventDefault();
-                    addStop();
-                }
-            }
+      document.addEventListener('keydown', function(event) {
+    // ENTER dodaje przystanek z obu pól
+    if (event.key === 'Enter') {
+        if (document.querySelector('.running-screen').classList.contains('active')) {
+            event.preventDefault();
+            departStop();
+        }
+        else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
+            event.preventDefault();
+            addStop();
+        }
+    }
+    
+    // SPACJA dodaje przystanek TYLKO z pola numerycznego, NIE z nazwy przystanku
+    if (event.code === 'Space') {
+        if (document.querySelector('.running-screen').classList.contains('active')) {
+            event.preventDefault();
+            departStop();
+        }
+        else if (event.target.id === 'stopMinutes') {  // ⬅️ TYLKO to pole!
+            event.preventDefault();
+            addStop();
+        }
+        // Jeśli jesteś w stopName - spacja działa normalnie (nie preventDefault)
+    }
             
             // STRZAŁKA W LEWO = COFNIJ
             if (event.key === 'ArrowLeft' && document.querySelector('.running-screen').classList.contains('active')) {
