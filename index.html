@@ -1482,28 +1482,31 @@
             return Math.floor((now - targetTime) / 1000); // w sekundach
         }
 
-        // ========== POPRAWIONA FUNKCJA: OBLICZANIE PRZEWIDYWANEGO CZASU ==========
-        function getEstimatedArrivalTime(stopIndex) {
-            if (stopIndex <= currentStopIndex) {
-                return null; // przeszłe przystanki nie mają przewidywanego czasu
-            }
-            
-            const currentDelay = getCurrentDelay();
-            
-            // Jeśli jesteśmy przed czasem, NIE pokazuj przewidywanego czasu
-            if (currentDelay < 0) {
-                return null;
-            }
-            
-            // Oblicz ile minut od TERAZ do tego przystanku
-            let minutesFromNow = 0;
-            for (let i = currentStopIndex + 1; i <= stopIndex; i++) {
-                minutesFromNow += currentRoute.stops[i].minutes;
-            }
-            
-            const now = new Date();
-            return new Date(now.getTime() + minutesFromNow * 60000);
-        }
+// ========== POPRAWIONA FUNKCJA: OBLICZANIE PRZEWIDYWANEGO CZASU ==========
+function getEstimatedArrivalTime(stopIndex) {
+    if (stopIndex < currentStopIndex) {
+        return null; // tylko PRZESZŁE przystanki nie mają przewidywanego czasu
+    }
+    
+    // Oblicz ile minut od TERAZ do tego przystanku
+    let minutesFromNow = 0;
+    // ZMIANA: zaczynamy od currentStopIndex (nie +1) żeby uwzględnić aktualny przystanek!
+    for (let i = currentStopIndex; i <= stopIndex; i++) {
+        minutesFromNow += currentRoute.stops[i].minutes;
+    }
+    
+    const now = new Date();
+    const estimatedTime = new Date(now.getTime() + minutesFromNow * 60000);
+    const plannedTime = plannedTimes[stopIndex];
+    
+    // Pokaż przewidywany czas TYLKO jeśli różnica > 30 sekund
+    const diffSeconds = Math.abs(estimatedTime - plannedTime) / 1000;
+    if (diffSeconds < 30) {
+        return null; // praktycznie na czas, nie pokazuj
+    }
+    
+    return estimatedTime;
+}
 
         function updateDisplay() {
             document.getElementById('lineInfo').textContent = 
@@ -1626,58 +1629,96 @@
             });
         }
 
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
+      function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
 
-            timerInterval = setInterval(() => {
-                const now = new Date();
-                const targetTime = plannedTimes[currentStopIndex];
-                const diff = Math.floor((now - targetTime) / 1000);
+    timerInterval = setInterval(() => {
+        const now = new Date();
+        const targetTime = plannedTimes[currentStopIndex];
+        const diff = Math.floor((now - targetTime) / 1000);
 
-                const minutes = Math.floor(Math.abs(diff) / 60);
-                const seconds = Math.abs(diff) % 60;
-                
-                const sign = diff >= 0 ? '-' : '';
-                const timeStr = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-                
-                const timerEl = document.getElementById('timer');
-                const indicatorEl = document.getElementById('delayIndicator');
-                timerEl.textContent = timeStr;
+        const minutes = Math.floor(Math.abs(diff) / 60);
+        const seconds = Math.abs(diff) % 60;
+        
+        const sign = diff >= 0 ? '-' : '';
+        const timeStr = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+        
+        const timerEl = document.getElementById('timer');
+        const indicatorEl = document.getElementById('delayIndicator');
+        timerEl.textContent = timeStr;
 
-                if (diff < 60) {
-                    timerEl.style.backgroundColor = '#4CAF50';
-                    timerEl.style.color = '#fff';
-                    if (diff < 0) {
-                        indicatorEl.textContent = '✅ PRZED CZASEM';
-                    } else {
-                        indicatorEl.textContent = '✅ NA CZAS';
-                    }
-                    indicatorEl.style.color = '#4CAF50';
-                } else if (diff >= 60 && diff < 120) {
-                    timerEl.style.backgroundColor = '#FFEB3B';
-                    timerEl.style.color = '#333';
-                    indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
-                    indicatorEl.style.color = '#F9A825';
-                } else if (diff >= 120 && diff < 300) {
-                    timerEl.style.backgroundColor = '#FF9800';
-                    timerEl.style.color = '#fff';
-                    indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
-                    indicatorEl.style.color = '#FF9800';
-                } else {
-                    timerEl.style.backgroundColor = '#F44336';
-                    timerEl.style.color = '#fff';
-                    indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
-                    indicatorEl.style.color = '#F44336';
-                }
-
-                updateETA();
-                
-                // Aktualizuj tylko przewidywane czasy co 5 sekund
-                if (seconds % 5 === 0) {
-                    renderSchedule();
-                }
-            }, 100);
+        if (diff < 60) {
+            timerEl.style.backgroundColor = '#4CAF50';
+            timerEl.style.color = '#fff';
+            if (diff < 0) {
+                indicatorEl.textContent = '✅ PRZED CZASEM';
+            } else {
+                indicatorEl.textContent = '✅ NA CZAS';
+            }
+            indicatorEl.style.color = '#4CAF50';
+        } else if (diff >= 60 && diff < 120) {
+            timerEl.style.backgroundColor = '#FFEB3B';
+            timerEl.style.color = '#333';
+            indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
+            indicatorEl.style.color = '#F9A825';
+        } else if (diff >= 120 && diff < 300) {
+            timerEl.style.backgroundColor = '#FF9800';
+            timerEl.style.color = '#fff';
+            indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
+            indicatorEl.style.color = '#FF9800';
+        } else {
+            timerEl.style.backgroundColor = '#F44336';
+            timerEl.style.color = '#fff';
+            indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
+            indicatorEl.style.color = '#F44336';
         }
+
+        updateETA();
+        
+        // Aktualizuj tylko przewidywane czasy co 5 sekund - BEZ PRZEŁADOWANIA
+        if (seconds % 5 === 0) {
+            updateEstimatedTimesOnly();
+        }
+    }, 100);
+}
+// AKTUALIZUJE TYLKO PRZEWIDYWANE CZASY - BEZ PRZEŁADOWANIA DOM
+function updateEstimatedTimesOnly() {
+    const scheduleItems = document.querySelectorAll('.schedule-item');
+    
+    scheduleItems.forEach((item, index) => {
+        if (index > currentStopIndex) {
+            const timeInfo = item.querySelector('.schedule-time-info');
+            if (!timeInfo) return;
+            
+            const estimatedTime = getEstimatedArrivalTime(index);
+            let estEl = timeInfo.querySelector('.estimated-time');
+            
+            if (estimatedTime) {
+                const estHours = String(estimatedTime.getHours()).padStart(2, '0');
+                const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                const newText = `~${estHours}:${estMinutes}`;
+                
+                if (estEl) {
+                    // Tylko zmień tekst jeśli się zmienił
+                    if (estEl.textContent !== newText) {
+                        estEl.textContent = newText;
+                    }
+                } else {
+                    // Dodaj nowy element
+                    estEl = document.createElement('div');
+                    estEl.className = 'estimated-time';
+                    estEl.textContent = newText;
+                    timeInfo.appendChild(estEl);
+                }
+            } else {
+                // Usuń przewidywany czas jeśli nie ma opóźnienia
+                if (estEl) {
+                    estEl.remove();
+                }
+            }
+        }
+    });
+}
 
         // COFNIJ DO POPRZEDNIEGO PRZYSTANKU
         function previousStop() {
