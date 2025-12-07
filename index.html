@@ -56,6 +56,16 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        @keyframes expandHeight {
+            from { max-height: 0; opacity: 0; }
+            to { max-height: 2000px; opacity: 1; }
+        }
+
+        @keyframes collapseHeight {
+            from { max-height: 2000px; opacity: 1; }
+            to { max-height: 0; opacity: 0; }
+        }
+
         .card {
             background: rgba(42, 42, 42, 0.9);
             border-radius: 15px;
@@ -107,12 +117,45 @@
             letter-spacing: 1px;
         }
 
-        /* NOWY INTERFEJS DODAWANIA PRZYSTANKÓW */
+        /* NOWY: PRZYCISK DODAWANIA */
+        .add-route-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .add-route-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .add-route-btn.active {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        }
+
+        /* NOWY INTERFEJS DODAWANIA PRZYSTANKÓW - UKRYTY DOMYŚLNIE */
         .quick-add {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+            overflow: hidden;
+        }
+
+        .quick-add.active {
+            display: block;
         }
 
         .quick-add h3 {
@@ -264,6 +307,193 @@
             font-size: 14px;
             color: #2196F3;
             font-weight: bold;
+        }
+
+        /* ============================================ */
+        /* NOWY SYSTEM GRUPOWANIA LINII */
+        /* ============================================ */
+
+        .groups-container {
+            margin-bottom: 20px;
+        }
+
+        .group-controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .group-controls input {
+            flex: 1;
+        }
+
+        /* DRZEWO GRUP I LINII */
+        .tree-view {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .tree-item {
+            margin-bottom: 5px;
+        }
+
+        .tree-folder {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.1));
+            border-left: 4px solid #FF9800;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            animation: slideDown 0.3s;
+        }
+
+        .tree-folder.level-1 {
+            border-left-color: #FF9800;
+        }
+
+        .tree-folder.level-2 {
+            border-left-color: #2196F3;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(3, 169, 244, 0.1));
+        }
+
+        .tree-folder.level-3 {
+            border-left-color: #9C27B0;
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(142, 36, 170, 0.1));
+        }
+
+        .folder-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto auto;
+            gap: 10px;
+            padding: 12px 15px;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .folder-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .folder-toggle {
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .folder-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .folder-icon {
+            font-size: 24px;
+        }
+
+        .folder-name {
+            font-weight: bold;
+            font-size: 16px;
+            flex: 1;
+        }
+
+        .folder-count {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .folder-actions button {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            font-size: 16px;
+            border-radius: 50%;
+        }
+
+        .folder-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s;
+            opacity: 0;
+            padding: 0 15px;
+        }
+
+        .folder-content.expanded {
+            max-height: 5000px;
+            opacity: 1;
+            padding: 10px 15px 15px 15px;
+        }
+
+        .folder-children {
+            margin-left: 20px;
+            border-left: 2px dashed rgba(255,255,255,0.1);
+            padding-left: 15px;
+        }
+
+        /* LINIA W DRZEWIE */
+        .tree-route {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.05));
+            border-left: 4px solid #4CAF50;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            animation: slideDown 0.3s;
+        }
+
+        .tree-route:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .route-tree-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .route-tree-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .route-tree-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .route-tree-details {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .route-tree-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .route-tree-actions button {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            font-size: 14px;
+            border-radius: 50%;
         }
 
         /* ============================================ */
@@ -627,7 +857,7 @@
             color: #f44336;
         }
 
-        /* ROUTE CARDS */
+        /* ROUTE CARDS - STARE (do usunięcia w następnej wersji, zostają dla kompatybilności) */
         .route-card {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
             padding: 20px;
@@ -761,6 +991,142 @@
             z-index: 999;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
+		        /* ============================================ */
+        /* WYSZUKIWARKI */
+        /* ============================================ */
+
+        .search-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-box:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .search-box input {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            background: rgba(255,255,255,0.15);
+            border-color: #4CAF50;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .search-results {
+            margin-top: 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .search-results.active {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-top: 15px;
+            border-top: 2px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .search-result-item {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.1));
+            border-left: 4px solid #4CAF50;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: slideDown 0.3s;
+        }
+
+        .search-result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(139, 195, 74, 0.2));
+        }
+
+        .search-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .search-result-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #4CAF50;
+        }
+
+        .search-result-badge {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .search-result-details {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .search-result-path {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .search-result-stops {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .search-stop-chip {
+            background: rgba(255,255,255,0.1);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .search-stop-chip.highlight {
+            background: rgba(255, 193, 7, 0.4);
+            color: #FFC107;
+            font-weight: bold;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
 
         /* RESPONSIVE */
         @media (max-width: 1200px) {
@@ -843,9 +1209,21 @@
                 font-size: 16px;
                 padding: 6px 10px;
             }
+
+            .folder-header {
+                grid-template-columns: auto 1fr auto;
+            }
+
+            .folder-count {
+                display: none;
+            }
+
+            .route-tree-header {
+                grid-template-columns: 1fr auto;
+            }
         }
     </style>
-</head>
+	</head>
 <body>
     <!-- ZEGAR NA ŻYWO -->
     <div class="live-clock" id="liveClock">
@@ -858,7 +1236,13 @@
         <div class="setup-screen active">
             <h1>🚌 System Przystanków</h1>
             
-            <div class="card quick-add">
+            <!-- NOWY PRZYCISK DODAWANIA -->
+            <button class="add-route-btn" id="toggleAddBtn" onclick="toggleAddForm()">
+                ➕ DODAJ NOWĄ LINIĘ
+            </button>
+
+            <!-- FORMULARZ DODAWANIA - UKRYTY DOMYŚLNIE -->
+            <div class="card quick-add" id="quickAddForm">
                 <h3>⚡ Szybkie tworzenie linii</h3>
                 <div class="input-group">
                     <input type="text" id="lineNumber" placeholder="Numer linii (np. 157)">
@@ -884,9 +1268,37 @@
                 </button>
             </div>
 
-            <div class="card">
-                <h2>📋 Zapisane linie</h2>
-                <div id="routesList"></div>
+            <!-- SYSTEM GRUPOWANIA -->
+            <div class="card groups-container">
+                <h2>📂 Zarządzanie grupami i liniami</h2>
+                
+                <div class="group-controls">
+                    <input type="text" id="newGroupName" placeholder="Nazwa nowej grupy (np. Autobusy, Tramwaje...)">
+                    <button class="btn-primary" onclick="createGroup()">➕ Utwórz grupę</button>
+                </div>
+				                <!-- WYSZUKIWARKI -->
+                <div class="search-panel">
+                    <div class="search-box">
+                        <input type="text" id="searchLines" placeholder="🔍 Szukaj linii (np. 157, tramwaj...)">
+                        <button class="btn-secondary btn-icon" onclick="clearSearch('searchLines')">✖️</button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <input type="text" id="searchStops" placeholder="🚏 Szukaj po przystanku lub kierunku...">
+                        <button class="btn-secondary btn-icon" onclick="clearSearch('searchStops')">✖️</button>
+                    </div>
+                    
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+
+                <!-- DRZEWO GRUP I LINII -->
+                <div class="tree-view" id="treeView">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <p>Brak grup i linii</p>
+                        <p style="font-size: 14px; margin-top: 10px; color: #666;">Utwórz grupy aby uporządkować linie</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -979,6 +1391,15 @@
         </div>
     </div>
 
+    <!-- MODAL PRZENOSZENIA DO GRUPY -->
+    <div class="modal" id="moveToGroupModal">
+        <div class="modal-content">
+            <h2 style="text-align: center; margin-bottom: 20px;">📁 Przenieś do grupy</h2>
+            <div id="groupSelectionList" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn-danger" onclick="closeMoveModal()" style="margin-top: 20px; width: 100%;">❌ Anuluj</button>
+        </div>
+    </div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -1003,7 +1424,7 @@
         window.dbPush = push;
         window.dbRemove = remove;
 
-        loadRoutes();
+        loadGroups();
     </script>
 
     <script>
@@ -1015,9 +1436,599 @@
         let clockInterval = null;
         let delayHistory = [];
         let selectedRouteId = null;
-        let editingRouteId = null; // ID edytowanej trasy
+        let editingRouteId = null;
+        let groups = {}; // { groupId: { name, children: [groupId/routeId], parent: groupId } }
+        let routes = {}; // { routeId: { lineNumber, direction, stops, parentGroup } }
+        let moveRouteId = null; // ID linii do przeniesienia
 
-        // ZEGAR NA ŻYWO
+        // ========================================
+        // NOWA FUNKCJA: TOGGLE FORMULARZA
+        // ========================================
+        function toggleAddForm() {
+            const form = document.getElementById('quickAddForm');
+            const btn = document.getElementById('toggleAddBtn');
+            
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+                btn.classList.remove('active');
+                btn.textContent = '➕ DODAJ NOWĄ LINIĘ';
+            } else {
+                form.classList.add('active');
+                btn.classList.add('active');
+                btn.textContent = '❌ ANULUJ DODAWANIE';
+                
+                // Scroll do formularza
+                setTimeout(() => {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+
+        // ========================================
+        // SYSTEM GRUPOWANIA
+        // ========================================
+
+        async function createGroup(parentId = null) {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) {
+                alert('❌ Podaj nazwę grupy!');
+                return;
+            }
+
+            try {
+                const groupRef = window.dbPush(window.dbRef(window.database, 'groups'));
+                await window.dbSet(groupRef, {
+                    name,
+                    parent: parentId,
+                    children: [],
+                    created: new Date().toISOString()
+                });
+
+                if (parentId) {
+                    // Dodaj do rodzica
+                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${parentId}`));
+                    if (parentSnapshot.exists()) {
+                        const parent = parentSnapshot.val();
+                        parent.children = parent.children || [];
+                        parent.children.push(groupRef.key);
+                        await window.dbSet(window.dbRef(window.database, `groups/${parentId}`), parent);
+                    }
+                }
+
+                document.getElementById('newGroupName').value = '';
+                alert('✅ Grupa utworzona!');
+                loadGroups();
+            } catch (error) {
+                console.error('Błąd tworzenia grupy:', error);
+                alert('❌ Błąd podczas tworzenia grupy!');
+            }
+        }
+
+        async function loadGroups() {
+            try {
+                const [groupsSnapshot, routesSnapshot] = await Promise.all([
+                    window.dbGet(window.dbRef(window.database, 'groups')),
+                    window.dbGet(window.dbRef(window.database, 'routes'))
+                ]);
+
+                groups = groupsSnapshot.exists() ? groupsSnapshot.val() : {};
+                routes = routesSnapshot.exists() ? routesSnapshot.val() : {};
+
+                renderTree();
+            } catch (error) {
+                console.error('Błąd ładowania danych:', error);
+            }
+        }
+		        // ========================================
+        // WYSZUKIWARKI
+        // ========================================
+
+        let searchTimeout = null;
+
+        // Event listenery dla wyszukiwarek
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchLines = document.getElementById('searchLines');
+            const searchStops = document.getElementById('searchStops');
+            
+            if (searchLines) {
+                searchLines.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => performSearch(), 300);
+                });
+            }
+            
+            if (searchStops) {
+                searchStops.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => performSearch(), 300);
+                });
+            }
+        });
+
+        function performSearch() {
+            const lineQuery = document.getElementById('searchLines').value.trim().toLowerCase();
+            const stopQuery = document.getElementById('searchStops').value.trim().toLowerCase();
+            
+            if (!lineQuery && !stopQuery) {
+                document.getElementById('searchResults').classList.remove('active');
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+
+            const results = [];
+
+            Object.entries(routes).forEach(([id, route]) => {
+                let score = 0;
+                let matchedStops = [];
+                let matchType = '';
+
+                // Wyszukiwanie po nazwie linii
+                if (lineQuery) {
+                    const lineNumber = route.lineNumber.toLowerCase();
+                    const direction = route.direction.toLowerCase();
+                    
+                    if (lineNumber.includes(lineQuery)) {
+                        score += 10;
+                        matchType = 'linia';
+                    }
+                    if (direction.includes(lineQuery)) {
+                        score += 5;
+                        matchType = matchType ? 'linia+kierunek' : 'kierunek';
+                    }
+                }
+
+                // Wyszukiwanie po przystankach/kierunku
+                if (stopQuery) {
+                    const direction = route.direction.toLowerCase();
+                    
+                    if (direction.includes(stopQuery)) {
+                        score += 8;
+                        matchType = matchType ? matchType + '+kierunek' : 'kierunek';
+                    }
+
+                    route.stops.forEach((stop, index) => {
+                        if (stop.name.toLowerCase().includes(stopQuery)) {
+                            score += 3;
+                            matchedStops.push(index);
+                            matchType = matchType ? matchType + '+przystanek' : 'przystanek';
+                        }
+                    });
+                }
+
+                if (score > 0) {
+                    results.push({
+                        id,
+                        route,
+                        score,
+                        matchedStops,
+                        matchType
+                    });
+                }
+            });
+
+            // Sortuj po score
+            results.sort((a, b) => b.score - a.score);
+
+            displaySearchResults(results, stopQuery);
+        }
+
+        function displaySearchResults(results, highlightQuery) {
+            const container = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <p>Brak wyników</p>
+                    </div>
+                `;
+                container.classList.add('active');
+                return;
+            }
+
+            container.innerHTML = '';
+            container.classList.add('active');
+
+            results.forEach(result => {
+                const { id, route, matchedStops, matchType } = result;
+                const totalTime = route.stops.reduce((sum, s) => sum + s.minutes, 0);
+                
+                // Znajdź ścieżkę grupy
+                const groupPath = getGroupPath(route.parentGroup);
+                
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.onclick = () => {
+                    highlightRouteInTree(id);
+                };
+
+                let stopsHtml = '';
+                if (matchedStops.length > 0 || highlightQuery) {
+                    stopsHtml = '<div class="search-result-stops">';
+                    route.stops.forEach((stop, index) => {
+                        const isMatched = matchedStops.includes(index);
+                        const chipClass = isMatched ? 'search-stop-chip highlight' : 'search-stop-chip';
+                        stopsHtml += `<div class="${chipClass}">${stop.name}</div>`;
+                    });
+                    stopsHtml += '</div>';
+                }
+
+                div.innerHTML = `
+                    <div class="search-result-header">
+                        <div class="search-result-title">🚌 Linia ${route.lineNumber}</div>
+                        <div class="search-result-badge">${matchType}</div>
+                    </div>
+                    <div class="search-result-details">
+                        📍 ${route.direction} • ${route.stops.length} przystanków • ${totalTime} min
+                    </div>
+                    ${groupPath ? `<div class="search-result-path">📁 ${groupPath}</div>` : ''}
+                    ${stopsHtml}
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function getGroupPath(groupId) {
+            if (!groupId || !groups[groupId]) return '';
+            
+            const path = [];
+            let currentId = groupId;
+            
+            while (currentId && groups[currentId]) {
+                path.unshift(groups[currentId].name);
+                currentId = groups[currentId].parent;
+            }
+            
+            return path.join(' > ');
+        }
+
+        function highlightRouteInTree(routeId) {
+            const route = routes[routeId];
+            if (!route) return;
+
+            // Rozwiń wszystkie grupy w ścieżce
+            let currentGroupId = route.parentGroup;
+            while (currentGroupId && groups[currentGroupId]) {
+                const toggle = document.getElementById(`toggle-${currentGroupId}`);
+                const content = document.getElementById(`content-${currentGroupId}`);
+                
+                if (toggle && content) {
+                    content.classList.add('expanded');
+                    toggle.classList.add('expanded');
+                }
+                
+                currentGroupId = groups[currentGroupId].parent;
+            }
+
+            // Przewiń do elementu
+            setTimeout(() => {
+                const treeView = document.getElementById('treeView');
+                const routeElements = treeView.querySelectorAll('.tree-route');
+                
+                routeElements.forEach(el => {
+                    if (el.innerHTML.includes(route.lineNumber) && el.innerHTML.includes(route.direction)) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Efekt podświetlenia
+                        el.style.boxShadow = '0 0 20px rgba(76, 175, 80, 0.8)';
+                        el.style.transform = 'scale(1.02)';
+                        
+                        setTimeout(() => {
+                            el.style.boxShadow = '';
+                            el.style.transform = '';
+                        }, 2000);
+                    }
+                });
+            }, 300);
+        }
+
+        function clearSearch(inputId) {
+            document.getElementById(inputId).value = '';
+            performSearch();
+        }
+
+        function renderTree() {
+            const treeView = document.getElementById('treeView');
+            
+            // Znajdź grupy główne (bez rodzica)
+            const rootGroups = Object.entries(groups).filter(([id, group]) => !group.parent);
+            
+            // Znajdź linie bez grupy
+            const orphanRoutes = Object.entries(routes).filter(([id, route]) => !route.parentGroup);
+
+            if (rootGroups.length === 0 && orphanRoutes.length === 0) {
+                treeView.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <p>Brak grup i linii</p>
+                        <p style="font-size: 14px; margin-top: 10px; color: #666;">Utwórz grupy aby uporządkować linie</p>
+                    </div>
+                `;
+                return;
+            }
+
+            treeView.innerHTML = '';
+
+            // Renderuj grupy główne
+            rootGroups.forEach(([id, group]) => {
+                treeView.appendChild(renderGroup(id, group, 1));
+            });
+
+            // Renderuj linie bez grupy
+            if (orphanRoutes.length > 0) {
+                const orphanSection = document.createElement('div');
+                orphanSection.style.marginTop = '15px';
+                orphanSection.innerHTML = '<h3 style="color: #888; font-size: 14px; margin-bottom: 10px;">📌 Linie bez grupy</h3>';
+                
+                orphanRoutes.forEach(([id, route]) => {
+                    orphanSection.appendChild(renderRoute(id, route));
+                });
+                
+                treeView.appendChild(orphanSection);
+            }
+        }
+
+        function renderGroup(groupId, group, level = 1) {
+            const div = document.createElement('div');
+            div.className = `tree-folder level-${Math.min(level, 3)}`;
+            
+            const children = group.children || [];
+            const childCount = children.length;
+            
+            // Ikona zależna od poziomu
+            const icons = ['📁', '📂', '🗂️'];
+            const icon = icons[Math.min(level - 1, 2)];
+
+            div.innerHTML = `
+                <div class="folder-header" onclick="toggleFolder('${groupId}')">
+                    <div class="folder-toggle" id="toggle-${groupId}">▶</div>
+                    <div class="folder-icon">${icon}</div>
+                    <div class="folder-name">${group.name}</div>
+                    <div class="folder-count">${childCount}</div>
+                    <div class="folder-actions" onclick="event.stopPropagation()">
+                        <button class="btn-primary" onclick="createSubgroup('${groupId}')" title="Dodaj podgrupę">➕</button>
+                        <button class="btn-warning" onclick="renameGroup('${groupId}')" title="Zmień nazwę">✏️</button>
+                        <button class="btn-danger" onclick="deleteGroup('${groupId}')" title="Usuń grupę">🗑️</button>
+                    </div>
+                </div>
+                <div class="folder-content" id="content-${groupId}">
+                    <div class="folder-children" id="children-${groupId}"></div>
+                </div>
+            `;
+
+            // Renderuj dzieci po dodaniu do DOM
+            setTimeout(() => {
+                const childrenContainer = document.getElementById(`children-${groupId}`);
+                if (childrenContainer && children.length > 0) {
+                    children.forEach(childId => {
+                        if (groups[childId]) {
+                            // To jest podgrupa
+                            childrenContainer.appendChild(renderGroup(childId, groups[childId], level + 1));
+                        } else if (routes[childId]) {
+                            // To jest linia
+                            childrenContainer.appendChild(renderRoute(childId, routes[childId]));
+                        }
+                    });
+                }
+            }, 0);
+
+            return div;
+        }
+
+        function renderRoute(routeId, route) {
+            const div = document.createElement('div');
+            div.className = 'tree-route';
+            
+            const totalTime = route.stops.reduce((sum, s) => sum + s.minutes, 0);
+            
+            div.innerHTML = `
+                <div class="route-tree-header">
+                    <div class="folder-icon">🚌</div>
+                    <div class="route-tree-info">
+                        <div class="route-tree-title">Linia ${route.lineNumber} → ${route.direction}</div>
+                        <div class="route-tree-details">${route.stops.length} przystanków • ${totalTime} min</div>
+                    </div>
+                    <div class="route-tree-actions">
+                        <button class="btn-primary" onclick="startRoute('${routeId}')" title="Uruchom">▶️</button>
+                        <button class="btn-secondary" onclick="openMoveModal('${routeId}')" title="Przenieś">📁</button>
+                        <button class="btn-warning" onclick="editRoute('${routeId}')" title="Edytuj">✏️</button>
+                        <button class="btn-danger" onclick="deleteRoute('${routeId}')" title="Usuń">🗑️</button>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        function toggleFolder(groupId) {
+            const toggle = document.getElementById(`toggle-${groupId}`);
+            const content = document.getElementById(`content-${groupId}`);
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                toggle.classList.add('expanded');
+            }
+        }
+
+        async function createSubgroup(parentId) {
+            const name = prompt('Nazwa podgrupy:');
+            if (!name || !name.trim()) return;
+
+            try {
+                const groupRef = window.dbPush(window.dbRef(window.database, 'groups'));
+                await window.dbSet(groupRef, {
+                    name: name.trim(),
+                    parent: parentId,
+                    children: [],
+                    created: new Date().toISOString()
+                });
+
+                // Dodaj do rodzica
+                const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${parentId}`));
+                if (parentSnapshot.exists()) {
+                    const parent = parentSnapshot.val();
+                    parent.children = parent.children || [];
+                    parent.children.push(groupRef.key);
+                    await window.dbSet(window.dbRef(window.database, `groups/${parentId}`), parent);
+                }
+
+                alert('✅ Podgrupa utworzona!');
+                loadGroups();
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('❌ Błąd podczas tworzenia podgrupy!');
+            }
+        }
+
+        async function renameGroup(groupId) {
+            const group = groups[groupId];
+            if (!group) return;
+
+            const newName = prompt('Nowa nazwa grupy:', group.name);
+            if (!newName || !newName.trim()) return;
+
+            try {
+                await window.dbSet(window.dbRef(window.database, `groups/${groupId}/name`), newName.trim());
+                alert('✅ Nazwa zmieniona!');
+                loadGroups();
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('❌ Błąd podczas zmiany nazwy!');
+            }
+        }
+
+        async function deleteGroup(groupId) {
+            const group = groups[groupId];
+            if (!group) return;
+
+            const children = group.children || [];
+            if (children.length > 0) {
+                if (!confirm(`⚠️ Ta grupa zawiera ${children.length} elementów. Usuń ją wraz z zawartością?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`🗑️ Usunąć grupę "${group.name}"?`)) {
+                    return;
+                }
+            }
+
+            try {
+                // Usuń rekurencyjnie dzieci
+                for (const childId of children) {
+                    if (groups[childId]) {
+                        await deleteGroup(childId);
+                    } else if (routes[childId]) {
+                        await window.dbRemove(window.dbRef(window.database, `routes/${childId}`));
+                    }
+                }
+
+                // Usuń z rodzica
+                if (group.parent) {
+                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${group.parent}`));
+                    if (parentSnapshot.exists()) {
+                        const parent = parentSnapshot.val();
+                        parent.children = (parent.children || []).filter(id => id !== groupId);
+                        await window.dbSet(window.dbRef(window.database, `groups/${group.parent}`), parent);
+                    }
+                }
+
+                // Usuń grupę
+                await window.dbRemove(window.dbRef(window.database, `groups/${groupId}`));
+                
+                loadGroups();
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('❌ Błąd podczas usuwania grupy!');
+            }
+        }
+
+        // ========================================
+        // PRZENOSZENIE LINII MIĘDZY GRUPAMI
+        // ========================================
+
+        function openMoveModal(routeId) {
+            moveRouteId = routeId;
+            const modal = document.getElementById('moveToGroupModal');
+            const listDiv = document.getElementById('groupSelectionList');
+            
+            listDiv.innerHTML = '';
+
+            // Opcja: bez grupy
+            const noGroupBtn = document.createElement('button');
+            noGroupBtn.className = 'btn-secondary';
+            noGroupBtn.style.width = '100%';
+            noGroupBtn.style.marginBottom = '10px';
+            noGroupBtn.textContent = '📌 Przenieś poza grupy';
+            noGroupBtn.onclick = () => moveRouteToGroup(null);
+            listDiv.appendChild(noGroupBtn);
+
+            // Wszystkie grupy
+            Object.entries(groups).forEach(([id, group]) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-primary';
+                btn.style.width = '100%';
+                btn.style.marginBottom = '10px';
+                btn.textContent = `📁 ${group.name}`;
+                btn.onclick = () => moveRouteToGroup(id);
+                listDiv.appendChild(btn);
+            });
+
+            modal.classList.add('active');
+        }
+
+        function closeMoveModal() {
+            document.getElementById('moveToGroupModal').classList.remove('active');
+            moveRouteId = null;
+        }
+
+        async function moveRouteToGroup(groupId) {
+            if (!moveRouteId) return;
+
+            try {
+                const route = routes[moveRouteId];
+                const oldParent = route.parentGroup;
+
+                // Usuń ze starej grupy
+                if (oldParent) {
+                    const oldParentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${oldParent}`));
+                    if (oldParentSnapshot.exists()) {
+                        const parent = oldParentSnapshot.val();
+                        parent.children = (parent.children || []).filter(id => id !== moveRouteId);
+                        await window.dbSet(window.dbRef(window.database, `groups/${oldParent}`), parent);
+                    }
+                }
+
+                // Dodaj do nowej grupy
+                if (groupId) {
+                    const newParentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${groupId}`));
+                    if (newParentSnapshot.exists()) {
+                        const parent = newParentSnapshot.val();
+                        parent.children = parent.children || [];
+                        parent.children.push(moveRouteId);
+                        await window.dbSet(window.dbRef(window.database, `groups/${groupId}`), parent);
+                    }
+                }
+
+                // Zaktualizuj linię
+                await window.dbSet(window.dbRef(window.database, `routes/${moveRouteId}/parentGroup`), groupId);
+
+                closeMoveModal();
+                alert('✅ Linia przeniesiona!');
+                loadGroups();
+            } catch (error) {
+                console.error('Błąd:', error);
+                alert('❌ Błąd podczas przenoszenia!');
+            }
+        }
+
+        // ========================================
+        // RESZTA KODU (ZEGAR, DODAWANIE, EDYCJA)
+        // ========================================
+
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -1039,7 +2050,6 @@
         updateClock();
         clockInterval = setInterval(updateClock, 1000);
 
-        // DŹWIĘK PRZY ODJEZDZIE
         function playDepartSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -1058,7 +2068,6 @@
             oscillator.stop(audioContext.currentTime + 0.5);
         }
 
-        // WIBRACJE
         function vibrate() {
             if (navigator.vibrate) {
                 navigator.vibrate(200);
@@ -1066,7 +2075,6 @@
         }
 
         document.addEventListener('keydown', function(event) {
-            // ENTER dodaje przystanek z obu pól
             if (event.key === 'Enter') {
                 if (document.querySelector('.running-screen').classList.contains('active')) {
                     event.preventDefault();
@@ -1078,7 +2086,6 @@
                 }
             }
             
-            // SPACJA dodaje przystanek TYLKO z pola numerycznego, NIE z nazwy przystanku
             if (event.code === 'Space') {
                 if (document.querySelector('.running-screen').classList.contains('active')) {
                     event.preventDefault();
@@ -1090,13 +2097,11 @@
                 }
             }
             
-            // STRZAŁKA W LEWO = COFNIJ
             if (event.key === 'ArrowLeft' && document.querySelector('.running-screen').classList.contains('active')) {
                 event.preventDefault();
                 previousStop();
             }
             
-            // STRZAŁKA W PRAWO = NASTĘPNY
             if (event.key === 'ArrowRight' && document.querySelector('.running-screen').classList.contains('active')) {
                 event.preventDefault();
                 departStop();
@@ -1248,6 +2253,7 @@
                 lineNumber,
                 direction,
                 stops: [...stops],
+                parentGroup: null,
                 created: new Date().toISOString()
             };
 
@@ -1260,14 +2266,17 @@
                 document.getElementById('lineNumber').value = '';
                 document.getElementById('direction').value = '';
                 renderStopList();
-                loadRoutes();
+                
+                // Ukryj formularz
+                toggleAddForm();
+                
+                loadGroups();
             } catch (error) {
                 console.error('Błąd zapisu:', error);
                 alert('❌ Błąd podczas zapisu!');
             }
         }
 
-        // ========== NOWA FUNKCJA: EDYCJA TRASY ==========
         async function editRoute(id) {
             try {
                 const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
@@ -1275,16 +2284,18 @@
 
                 const route = snapshot.val();
                 
-                // Załaduj do formularza
                 stops = [...route.stops];
                 document.getElementById('lineNumber').value = route.lineNumber;
                 document.getElementById('direction').value = route.direction;
                 renderStopList();
                 
-                // Zapisz ID edytowanej trasy
                 editingRouteId = id;
                 
-                // Zmień przycisk "Zapisz" na "Zapisz zmiany"
+                // Pokaż formularz
+                if (!document.getElementById('quickAddForm').classList.contains('active')) {
+                    toggleAddForm();
+                }
+                
                 const saveBtn = document.getElementById('saveRouteBtn');
                 saveBtn.textContent = '💾 Zapisz zmiany';
                 saveBtn.onclick = () => updateRoute(id);
@@ -1297,7 +2308,6 @@
             }
         }
 
-        // ========== NOWA FUNKCJA: AKTUALIZACJA TRASY ==========
         async function updateRoute(id) {
             const lineNumber = document.getElementById('lineNumber').value.trim();
             const direction = document.getElementById('direction').value.trim();
@@ -1312,99 +2322,39 @@
                 return;
             }
 
-            const route = {
-                lineNumber,
-                direction,
-                stops: [...stops],
-                created: new Date().toISOString()
-            };
-
             try {
+                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
+                const existingRoute = snapshot.val();
+
+                const route = {
+                    lineNumber,
+                    direction,
+                    stops: [...stops],
+                    parentGroup: existingRoute.parentGroup || null,
+                    created: existingRoute.created || new Date().toISOString()
+                };
+
                 await window.dbSet(window.dbRef(window.database, `routes/${id}`), route);
                 
                 alert('✅ Linia zaktualizowana pomyślnie!');
                 
-                // Reset
                 stops = [];
                 document.getElementById('lineNumber').value = '';
                 document.getElementById('direction').value = '';
                 renderStopList();
                 editingRouteId = null;
                 
-                // Przywróć normalny przycisk
                 const saveBtn = document.getElementById('saveRouteBtn');
                 saveBtn.textContent = '💾 Zapisz linię do Firebase';
                 saveBtn.onclick = saveRoute;
                 
-                loadRoutes();
+                // Ukryj formularz
+                toggleAddForm();
+                
+                loadGroups();
             } catch (error) {
                 console.error('Błąd zapisu:', error);
                 alert('❌ Błąd podczas zapisu!');
-            }
-        }
-
-        async function loadRoutes() {
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, 'routes'));
-                const routesDiv = document.getElementById('routesList');
-                routesDiv.innerHTML = '';
-
-                if (snapshot.exists()) {
-                    const routes = snapshot.val();
-                    Object.entries(routes).forEach(([id, route]) => {
-                        const totalTime = route.stops.reduce((sum, s) => sum + s.minutes, 0);
-                        
-                        const div = document.createElement('div');
-                        div.className = 'route-card';
-                        div.innerHTML = `
-                            <div class="route-header">
-                                <div class="route-title">🚌 Linia ${route.lineNumber}</div>
-                                <div class="route-badge">${route.stops.length} przystanków</div>
-                            </div>
-                            <div class="route-details">
-                                📍 Kierunek: ${route.direction} • ⏱️ Czas trasy: ${totalTime} min
-                            </div>
-                            <div class="route-stops-preview">
-                                ${route.stops.slice(0, 5).map(s => `<div class="stop-chip">${s.name}</div>`).join('')}
-                                ${route.stops.length > 5 ? `<div class="stop-chip">+${route.stops.length - 5} więcej</div>` : ''}
-                            </div>
-                            <div class="route-actions">
-                                <button class="btn-primary" onclick="startRoute('${id}')">▶️ URUCHOM</button>
-                                <button class="btn-warning" onclick="editRoute('${id}')">✏️ EDYTUJ</button>
-                                <button class="btn-secondary" onclick="duplicateRoute('${id}')">📋</button>
-                                <button class="btn-danger" onclick="deleteRoute('${id}')">🗑️</button>
-                            </div>
-                        `;
-                        routesDiv.appendChild(div);
-                    });
-                } else {
-                    routesDiv.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <p>Brak zapisanych linii</p>
-                            <p style="font-size: 14px; margin-top: 10px; color: #666;">Utwórz pierwszą linię aby rozpocząć</p>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Błąd ładowania tras:', error);
-            }
-        }
-
-        async function duplicateRoute(id) {
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
-                if (!snapshot.exists()) return;
-
-                const route = snapshot.val();
-                stops = [...route.stops];
-                document.getElementById('lineNumber').value = route.lineNumber;
-                document.getElementById('direction').value = route.direction + ' (kopia)';
-                renderStopList();
-                
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (error) {
-                console.error('Błąd duplikowania:', error);
             }
         }
 
@@ -1412,8 +2362,23 @@
             if (!confirm('🗑️ Czy na pewno usunąć tę linię?')) return;
             
             try {
+                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
+                if (!snapshot.exists()) return;
+
+                const route = snapshot.val();
+
+                // Usuń z grupy rodzica
+                if (route.parentGroup) {
+                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${route.parentGroup}`));
+                    if (parentSnapshot.exists()) {
+                        const parent = parentSnapshot.val();
+                        parent.children = (parent.children || []).filter(childId => childId !== id);
+                        await window.dbSet(window.dbRef(window.database, `groups/${route.parentGroup}`), parent);
+                    }
+                }
+
                 await window.dbRemove(window.dbRef(window.database, `routes/${id}`));
-                loadRoutes();
+                loadGroups();
             } catch (error) {
                 console.error('Błąd usuwania:', error);
             }
@@ -1475,38 +2440,33 @@
             startTimer();
         }
 
-        // FUNKCJA OBLICZAJĄCA AKTUALNE OPÓŹNIENIE
         function getCurrentDelay() {
             const now = new Date();
             const targetTime = plannedTimes[currentStopIndex];
-            return Math.floor((now - targetTime) / 1000); // w sekundach
+            return Math.floor((now - targetTime) / 1000);
         }
 
-// ========== POPRAWIONA FUNKCJA: OBLICZANIE PRZEWIDYWANEGO CZASU ==========
-function getEstimatedArrivalTime(stopIndex) {
-    if (stopIndex < currentStopIndex) {
-        return null; // tylko PRZESZŁE przystanki nie mają przewidywanego czasu
-    }
-    
-    // Oblicz ile minut od TERAZ do tego przystanku
-    let minutesFromNow = 0;
-    // ZMIANA: zaczynamy od currentStopIndex (nie +1) żeby uwzględnić aktualny przystanek!
-    for (let i = currentStopIndex; i <= stopIndex; i++) {
-        minutesFromNow += currentRoute.stops[i].minutes;
-    }
-    
-    const now = new Date();
-    const estimatedTime = new Date(now.getTime() + minutesFromNow * 60000);
-    const plannedTime = plannedTimes[stopIndex];
-    
-    // Pokaż przewidywany czas TYLKO jeśli różnica > 30 sekund
-    const diffSeconds = Math.abs(estimatedTime - plannedTime) / 1000;
-    if (diffSeconds < 30) {
-        return null; // praktycznie na czas, nie pokazuj
-    }
-    
-    return estimatedTime;
-}
+        function getEstimatedArrivalTime(stopIndex) {
+            if (stopIndex < currentStopIndex) {
+                return null;
+            }
+            
+            let minutesFromNow = 0;
+            for (let i = currentStopIndex; i <= stopIndex; i++) {
+                minutesFromNow += currentRoute.stops[i].minutes;
+            }
+            
+            const now = new Date();
+            const estimatedTime = new Date(now.getTime() + minutesFromNow * 60000);
+            const plannedTime = plannedTimes[stopIndex];
+            
+            const diffSeconds = Math.abs(estimatedTime - plannedTime) / 1000;
+            if (diffSeconds < 30) {
+                return null;
+            }
+            
+            return estimatedTime;
+        }
 
         function updateDisplay() {
             document.getElementById('lineInfo').textContent = 
@@ -1541,7 +2501,6 @@ function getEstimatedArrivalTime(stopIndex) {
         }
 
         function updateETA() {
-            // Oblicz ETA dla ostatniego przystanku
             const lastStopIndex = plannedTimes.length - 1;
             const estimatedTime = getEstimatedArrivalTime(lastStopIndex);
             
@@ -1550,7 +2509,6 @@ function getEstimatedArrivalTime(stopIndex) {
                 const minutes = String(estimatedTime.getMinutes()).padStart(2, '0');
                 document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
             } else {
-                // Jeśli nie ma opóźnienia, pokaż planowany czas
                 const plannedTime = plannedTimes[lastStopIndex];
                 const hours = String(plannedTime.getHours()).padStart(2, '0');
                 const minutes = String(plannedTime.getMinutes()).padStart(2, '0');
@@ -1591,7 +2549,6 @@ function getEstimatedArrivalTime(stopIndex) {
                 const time = plannedTimes[index];
                 const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
                 
-                // ========== POPRAWIONE PRZEWIDYWANIE CZASU ==========
                 let estimatedTimeStr = '';
                 if (index > currentStopIndex) {
                     const estimatedTime = getEstimatedArrivalTime(index);
@@ -1629,98 +2586,93 @@ function getEstimatedArrivalTime(stopIndex) {
             });
         }
 
-      function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
 
-    timerInterval = setInterval(() => {
-        const now = new Date();
-        const targetTime = plannedTimes[currentStopIndex];
-        const diff = Math.floor((now - targetTime) / 1000);
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const targetTime = plannedTimes[currentStopIndex];
+                const diff = Math.floor((now - targetTime) / 1000);
 
-        const minutes = Math.floor(Math.abs(diff) / 60);
-        const seconds = Math.abs(diff) % 60;
-        
-        const sign = diff >= 0 ? '-' : '';
-        const timeStr = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-        
-        const timerEl = document.getElementById('timer');
-        const indicatorEl = document.getElementById('delayIndicator');
-        timerEl.textContent = timeStr;
-
-        if (diff < 60) {
-            timerEl.style.backgroundColor = '#4CAF50';
-            timerEl.style.color = '#fff';
-            if (diff < 0) {
-                indicatorEl.textContent = '✅ PRZED CZASEM';
-            } else {
-                indicatorEl.textContent = '✅ NA CZAS';
-            }
-            indicatorEl.style.color = '#4CAF50';
-        } else if (diff >= 60 && diff < 120) {
-            timerEl.style.backgroundColor = '#FFEB3B';
-            timerEl.style.color = '#333';
-            indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
-            indicatorEl.style.color = '#F9A825';
-        } else if (diff >= 120 && diff < 300) {
-            timerEl.style.backgroundColor = '#FF9800';
-            timerEl.style.color = '#fff';
-            indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
-            indicatorEl.style.color = '#FF9800';
-        } else {
-            timerEl.style.backgroundColor = '#F44336';
-            timerEl.style.color = '#fff';
-            indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
-            indicatorEl.style.color = '#F44336';
-        }
-
-        updateETA();
-        
-        // Aktualizuj tylko przewidywane czasy co 5 sekund - BEZ PRZEŁADOWANIA
-        if (seconds % 5 === 0) {
-            updateEstimatedTimesOnly();
-        }
-    }, 100);
-}
-// AKTUALIZUJE TYLKO PRZEWIDYWANE CZASY - BEZ PRZEŁADOWANIA DOM
-function updateEstimatedTimesOnly() {
-    const scheduleItems = document.querySelectorAll('.schedule-item');
-    
-    scheduleItems.forEach((item, index) => {
-        if (index > currentStopIndex) {
-            const timeInfo = item.querySelector('.schedule-time-info');
-            if (!timeInfo) return;
-            
-            const estimatedTime = getEstimatedArrivalTime(index);
-            let estEl = timeInfo.querySelector('.estimated-time');
-            
-            if (estimatedTime) {
-                const estHours = String(estimatedTime.getHours()).padStart(2, '0');
-                const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
-                const newText = `~${estHours}:${estMinutes}`;
+                const minutes = Math.floor(Math.abs(diff) / 60);
+                const seconds = Math.abs(diff) % 60;
                 
-                if (estEl) {
-                    // Tylko zmień tekst jeśli się zmienił
-                    if (estEl.textContent !== newText) {
-                        estEl.textContent = newText;
-                    }
-                } else {
-                    // Dodaj nowy element
-                    estEl = document.createElement('div');
-                    estEl.className = 'estimated-time';
-                    estEl.textContent = newText;
-                    timeInfo.appendChild(estEl);
-                }
-            } else {
-                // Usuń przewidywany czas jeśli nie ma opóźnienia
-                if (estEl) {
-                    estEl.remove();
-                }
-            }
-        }
-    });
-}
+                const sign = diff >= 0 ? '-' : '';
+                const timeStr = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+                
+                const timerEl = document.getElementById('timer');
+                const indicatorEl = document.getElementById('delayIndicator');
+                timerEl.textContent = timeStr;
 
-        // COFNIJ DO POPRZEDNIEGO PRZYSTANKU
+                if (diff < 60) {
+                    timerEl.style.backgroundColor = '#4CAF50';
+                    timerEl.style.color = '#fff';
+                    if (diff < 0) {
+                        indicatorEl.textContent = '✅ PRZED CZASEM';
+                    } else {
+                        indicatorEl.textContent = '✅ NA CZAS';
+                    }
+                    indicatorEl.style.color = '#4CAF50';
+                } else if (diff >= 60 && diff < 120) {
+                    timerEl.style.backgroundColor = '#FFEB3B';
+                    timerEl.style.color = '#333';
+                    indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
+                    indicatorEl.style.color = '#F9A825';
+                } else if (diff >= 120 && diff < 300) {
+                    timerEl.style.backgroundColor = '#FF9800';
+                    timerEl.style.color = '#fff';
+                    indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
+                    indicatorEl.style.color = '#FF9800';
+                } else {
+                    timerEl.style.backgroundColor = '#F44336';
+                    timerEl.style.color = '#fff';
+                    indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
+                    indicatorEl.style.color = '#F44336';
+                }
+
+                updateETA();
+                
+                if (seconds % 5 === 0) {
+                    updateEstimatedTimesOnly();
+                }
+            }, 100);
+        }
+
+        function updateEstimatedTimesOnly() {
+            const scheduleItems = document.querySelectorAll('.schedule-item');
+            
+            scheduleItems.forEach((item, index) => {
+                if (index > currentStopIndex) {
+                    const timeInfo = item.querySelector('.schedule-time-info');
+                    if (!timeInfo) return;
+                    
+                    const estimatedTime = getEstimatedArrivalTime(index);
+                    let estEl = timeInfo.querySelector('.estimated-time');
+                    
+                    if (estimatedTime) {
+                        const estHours = String(estimatedTime.getHours()).padStart(2, '0');
+                        const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
+                        const newText = `~${estHours}:${estMinutes}`;
+                        
+                        if (estEl) {
+                            if (estEl.textContent !== newText) {
+                                estEl.textContent = newText;
+                            }
+                        } else {
+                            estEl = document.createElement('div');
+                            estEl.className = 'estimated-time';
+                            estEl.textContent = newText;
+                            timeInfo.appendChild(estEl);
+                        }
+                    } else {
+                        if (estEl) {
+                            estEl.remove();
+                        }
+                    }
+                }
+            });
+        }
+
         function previousStop() {
             if (currentStopIndex === 0) {
                 return;
@@ -1755,8 +2707,6 @@ function updateEstimatedTimesOnly() {
 
             playDepartSound();
             vibrate();
-            
-            // USUNIĘTO: announceNextStop(); - brak syntesy mowy
 
             currentStopIndex++;
             updateDisplay();
@@ -1783,20 +2733,31 @@ function updateEstimatedTimesOnly() {
             document.querySelector('.setup-screen').classList.add('active');
         }
 
+        // EXPORT FUNKCJI
+        window.toggleAddForm = toggleAddForm;
         window.addStop = addStop;
         window.editStop = editStop;
         window.removeStop = removeStop;
         window.saveRoute = saveRoute;
-        window.editRoute = editRoute; // NOWA
-        window.updateRoute = updateRoute; // NOWA
+        window.editRoute = editRoute;
+        window.updateRoute = updateRoute;
         window.deleteRoute = deleteRoute;
-        window.duplicateRoute = duplicateRoute;
         window.startRoute = startRoute;
         window.setCurrentTime = setCurrentTime;
         window.confirmStartTime = confirmStartTime;
         window.departStop = departStop;
         window.previousStop = previousStop;
         window.endRoute = endRoute;
+        window.createGroup = createGroup;
+        window.createSubgroup = createSubgroup;
+        window.renameGroup = renameGroup;
+        window.deleteGroup = deleteGroup;
+        window.toggleFolder = toggleFolder;
+        window.openMoveModal = openMoveModal;
+        window.closeMoveModal = closeMoveModal;
+        window.moveRouteToGroup = moveRouteToGroup;
+		        window.clearSearch = clearSearch;
+        window.performSearch = performSearch;
     </script>
 </body>
 </html>
