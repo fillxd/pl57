@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚌 System Przystanków Autobusowych</title>
+    <title>System MPK - Panel Kierowcy</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap');
-
         * {
             margin: 0;
             padding: 0;
@@ -14,2750 +17,2297 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
             min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
+            padding: 15px;
+            color: #e0e0e0;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-        }
-
-        .setup-screen, .running-screen {
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-
-        .setup-screen.active, .running-screen.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes ledGlow {
-            0%, 100% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
-            50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes expandHeight {
-            from { max-height: 0; opacity: 0; }
-            to { max-height: 2000px; opacity: 1; }
-        }
-
-        @keyframes collapseHeight {
-            from { max-height: 2000px; opacity: 1; }
-            to { max-height: 0; opacity: 0; }
-        }
-
-        .card {
-            background: rgba(42, 42, 42, 0.9);
-            border-radius: 15px;
+            background: #1a1f3a;
+            border-radius: 12px;
             padding: 25px;
-            margin-bottom: 20px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
         }
 
         h1 {
+            color: #4fc3f7;
+            margin-bottom: 25px;
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #4CAF50, #8BC34A);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 3px solid #4fc3f7;
+            padding-bottom: 15px;
         }
 
         h2 {
-            margin-bottom: 20px;
-            color: #4CAF50;
+            color: #81d4fa;
+            margin: 20px 0 15px 0;
             font-size: 1.5em;
+            border-bottom: 2px solid #2a3f5f;
+            padding-bottom: 10px;
         }
 
-        /* ZEGAR W LEWYM GÓRNYM ROGU */
-        .live-clock {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-family: 'Orbitron', monospace;
-            font-size: 28px;
-            font-weight: bold;
-            color: #4CAF50;
-            z-index: 1000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            border: 2px solid rgba(76, 175, 80, 0.3);
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #2a3f5f;
         }
 
-        .clock-date {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: 5px;
-            letter-spacing: 1px;
-        }
-
-        /* NOWY: PRZYCISK DODAWANIA */
-        .add-route-btn {
-            width: 100%;
-            padding: 20px;
-            font-size: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 15px;
+        .tab {
+            padding: 12px 25px;
             cursor: pointer;
-            font-weight: bold;
+            border: none;
+            background: #0f1529;
+            font-size: 15px;
+            color: #b0b0b0;
+            border-bottom: 3px solid transparent;
             transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
+            border-radius: 8px 8px 0 0;
         }
 
-        .add-route-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        .tab:hover {
+            color: #4fc3f7;
+            background: #1a2035;
         }
 
-        .add-route-btn.active {
-            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        .tab.active {
+            color: #4fc3f7;
+            border-bottom-color: #4fc3f7;
+            background: #1a1f3a;
+            font-weight: bold;
         }
 
-        /* NOWY INTERFEJS DODAWANIA PRZYSTANKÓW - UKRYTY DOMYŚLNIE */
-        .quick-add {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+        .tab-content {
             display: none;
-            animation: slideDown 0.4s ease-out;
-            overflow: hidden;
         }
 
-        .quick-add.active {
+        .tab-content.active {
             display: block;
         }
 
-        .quick-add h3 {
-            margin-bottom: 15px;
-            color: #fff;
+        .form-group {
+            margin-bottom: 18px;
         }
 
-        .input-group {
-            display: grid;
-            grid-template-columns: 2fr 1fr auto;
-            gap: 10px;
-            margin-bottom: 15px;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0bec5;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        input, select {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
+        input[type="text"],
+        input[type="number"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #2a3f5f;
+            border-radius: 6px;
             font-size: 16px;
-            background: rgba(255,255,255,0.9);
-            color: #333;
+            background: #0f1529;
+            color: #e0e0e0;
             transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        input:focus, select:focus {
+        select {
+            cursor: pointer;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
             outline: none;
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            border-color: #4fc3f7;
+            background: #1a2035;
         }
 
         button {
-            padding: 12px 24px;
+            background: #1976d2;
+            color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 12px 25px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 15px;
             transition: all 0.3s;
+            margin-right: 10px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         button:hover {
+            background: #1565c0;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 20px rgba(25, 118, 210, 0.4);
         }
 
-        button:active {
-            transform: translateY(0);
+        button.danger {
+            background: #d32f2f;
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        button.danger:hover {
+            background: #c62828;
+            box-shadow: 0 5px 20px rgba(211, 47, 47, 0.4);
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, #4CAF50, #8BC34A);
-            color: white;
+        button.success {
+            background: #388e3c;
         }
 
-        .btn-secondary {
-            background: linear-gradient(45deg, #2196F3, #03A9F4);
-            color: white;
+        button.success:hover {
+            background: #2e7d32;
+            box-shadow: 0 5px 20px rgba(56, 142, 60, 0.4);
         }
 
-        .btn-danger {
-            background: linear-gradient(45deg, #f44336, #e91e63);
-            color: white;
+        button.warning {
+            background: #f57c00;
         }
 
-        .btn-warning {
-            background: linear-gradient(45deg, #FF9800, #FFC107);
-            color: white;
+        button.warning:hover {
+            background: #ef6c00;
+            box-shadow: 0 5px 20px rgba(245, 124, 0, 0.4);
         }
 
-        .btn-icon {
-            width: 45px;
-            height: 45px;
-            padding: 0;
-            font-size: 20px;
-            border-radius: 50%;
+        button.small {
+            padding: 6px 12px;
+            font-size: 13px;
+            margin: 0 2px;
         }
 
-        /* LISTA PRZYSTANKÓW Z DRAG & DROP */
-        .stops-editor {
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
+        .stops-list {
+            background: #0f1529;
             padding: 15px;
-            min-height: 100px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #2a3f5f;
         }
 
         .stop-item {
-            background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
-            padding: 15px;
+            background: #1a2035;
+            padding: 12px 15px;
             margin-bottom: 10px;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: auto 1fr auto auto auto;
-            gap: 15px;
-            align-items: center;
-            cursor: move;
-            transition: all 0.3s;
-            border-left: 4px solid #4CAF50;
-            animation: slideIn 0.3s;
-        }
-
-        .stop-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .stop-item.dragging {
-            opacity: 0.5;
-        }
-
-        .stop-number {
-            background: #4CAF50;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
+            border-radius: 6px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
+            border-left: 4px solid #4fc3f7;
+            gap: 15px;
         }
 
         .stop-info {
-            display: flex;
-            flex-direction: column;
+            flex-grow: 1;
         }
 
         .stop-name {
             font-weight: bold;
+            color: #e0e0e0;
             font-size: 16px;
         }
 
-        .stop-time {
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        .stop-duration {
-            background: rgba(33, 150, 243, 0.3);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #2196F3;
-            font-weight: bold;
-        }
-
-        /* ============================================ */
-        /* NOWY SYSTEM GRUPOWANIA LINII */
-        /* ============================================ */
-
-        .groups-container {
-            margin-bottom: 20px;
-        }
-
-        .group-controls {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .group-controls input {
-            flex: 1;
-        }
-
-        /* DRZEWO GRUP I LINII */
-        .tree-view {
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 15px;
-        }
-
-        .tree-item {
+        .stop-name-input {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 15px;
             margin-bottom: 5px;
         }
 
-        .tree-folder {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.1));
-            border-left: 4px solid #FF9800;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 10px;
-            animation: slideDown 0.3s;
+        .stop-time {
+            color: #90a4ae;
+            font-size: 13px;
+            margin-top: 5px;
         }
 
-        .tree-folder.level-1 {
-            border-left-color: #FF9800;
+        .stop-time-input {
+            width: 80px;
+            padding: 8px;
+            font-size: 14px;
         }
 
-        .tree-folder.level-2 {
-            border-left-color: #2196F3;
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(3, 169, 244, 0.1));
+        .stop-actions {
+            display: flex;
+            gap: 5px;
+            align-items: center;
         }
 
-        .tree-folder.level-3 {
-            border-left-color: #9C27B0;
-            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(142, 36, 170, 0.1));
+        .lines-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .folder-section {
+            margin-bottom: 30px;
         }
 
         .folder-header {
-            display: grid;
-            grid-template-columns: auto 1fr auto auto auto auto;
-            gap: 10px;
-            padding: 12px 15px;
+            background: #0f1529;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            border: 2px solid #2a3f5f;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .folder-header:hover {
-            background: rgba(255,255,255,0.05);
+            border-color: #4fc3f7;
         }
 
-        .folder-toggle {
-            width: 30px;
-            height: 30px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
+        .folder-header h3 {
+            color: #4fc3f7;
+            font-size: 1.3em;
+        }
+
+        .folder-controls {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .folder-toggle.expanded {
-            transform: rotate(90deg);
-        }
-
-        .folder-icon {
-            font-size: 24px;
-        }
-
-        .folder-name {
-            font-weight: bold;
-            font-size: 16px;
-            flex: 1;
-        }
-
-        .folder-count {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .folder-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .folder-actions button {
-            width: 35px;
-            height: 35px;
-            padding: 0;
-            font-size: 16px;
-            border-radius: 50%;
-        }
-
-        .folder-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out, opacity 0.3s;
-            opacity: 0;
-            padding: 0 15px;
-        }
-
-        .folder-content.expanded {
-            max-height: 5000px;
-            opacity: 1;
-            padding: 10px 15px 15px 15px;
-        }
-
-        .folder-children {
-            margin-left: 20px;
-            border-left: 2px dashed rgba(255,255,255,0.1);
-            padding-left: 15px;
-        }
-
-        /* LINIA W DRZEWIE */
-        .tree-route {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.05));
-            border-left: 4px solid #4CAF50;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            transition: all 0.3s;
-            animation: slideDown 0.3s;
-        }
-
-        .tree-route:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .route-tree-header {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .route-tree-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .route-tree-title {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 3px;
-        }
-
-        .route-tree-details {
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        .route-tree-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .route-tree-actions button {
-            width: 35px;
-            height: 35px;
-            padding: 0;
-            font-size: 14px;
-            border-radius: 50%;
-        }
-
-        /* ============================================ */
-        /* EKRAN DZIAŁANIA - NOWY LAYOUT 2-KOLUMNOWY */
-        /* ============================================ */
-        
-        .running-layout {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 20px;
-            height: calc(100vh - 40px);
-            max-height: 1000px;
-        }
-
-        .main-display-column {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .sidebar-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        /* Scrollbar styling */
-        .sidebar-column::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .sidebar-column::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-        }
-
-        .sidebar-column::-webkit-scrollbar-thumb {
-            background: rgba(76, 175, 80, 0.5);
-            border-radius: 10px;
-        }
-
-        .sidebar-column::-webkit-scrollbar-thumb:hover {
-            background: rgba(76, 175, 80, 0.8);
-        }
-
-        .bus-display {
-            background: #000;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 0 50px rgba(255, 165, 0, 0.3), inset 0 0 20px rgba(255,255,255,0.1);
-            border: 3px solid #333;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        }
-
-        /* ETA BADGE */
-        .eta-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-family: 'Orbitron', monospace;
-            font-size: 14px;
-        }
-
-        .eta-label {
-            font-size: 10px;
-            color: #ddd;
-            text-transform: uppercase;
-        }
-
-        .eta-time {
-            font-size: 18px;
-            font-weight: bold;
-            color: #FFD700;
-        }
-
-        .line-info {
-            text-align: center;
-            font-family: 'Orbitron', monospace;
-            font-size: 24px;
-            color: #FFA500;
-            margin-bottom: 20px;
-            letter-spacing: 3px;
-        }
-
-        .next-stop-label {
-            text-align: center;
-            font-size: 18px;
-            color: #888;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .current-stop {
-            text-align: center;
-            font-family: 'Orbitron', monospace;
-            font-size: 56px;
-            font-weight: 900;
-            margin: 20px 0;
-            text-transform: uppercase;
-            background: linear-gradient(45deg, #FFD700, #FFA500);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.2;
-        }
-
-        .timer-container {
-            position: relative;
-            margin: 30px 0;
-        }
-
-        .timer {
-            text-align: center;
-            font-family: 'Orbitron', monospace;
-            font-size: 90px;
-            font-weight: 900;
-            padding: 40px;
-            border-radius: 20px;
-            transition: all 0.5s;
-            letter-spacing: 10px;
-            text-shadow: 0 0 30px currentColor;
-            position: relative;
-        }
-
-        .timer::before {
-            content: '';
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            right: -5px;
-            bottom: -5px;
-            background: inherit;
-            filter: blur(20px);
-            opacity: 0.5;
-            z-index: -1;
-            border-radius: 20px;
-        }
-
-        .delay-indicator {
-            text-align: center;
-            font-size: 24px;
-            margin-top: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* STATUS BAR - teraz w sidebarze */
-        .status-bar {
-            display: grid;
-            grid-template-columns: 1fr;
             gap: 10px;
         }
 
-        .status-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .status-label {
-            font-size: 12px;
-            color: #888;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .status-value {
-            font-size: 24px;
-            font-weight: bold;
-            font-family: 'Orbitron', monospace;
-        }
-
-        /* CONTROLS - NOWY UKŁAD Z STRZAŁKAMI */
-        .controls {
-            display: grid;
-            grid-template-columns: auto 1fr auto 1fr;
-            gap: 15px;
-        }
-
-        .controls button {
+        .line-card {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            color: white;
             padding: 20px;
-            font-size: 18px;
-        }
-
-        .controls .btn-icon {
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            border-radius: 50%;
-        }
-
-        /* PROGRESS BAR */
-        .route-progress {
-            background: rgba(0,0,0,0.3);
-            height: 8px;
             border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .route-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            transition: width 0.5s;
-            box-shadow: 0 0 10px #4CAF50;
-        }
-
-        /* ROZKŁAD JAZDY - kompaktowy w sidebarze */
-        .schedule-container {
-            background: rgba(42, 42, 42, 0.9);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .schedule-header {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(76, 175, 80, 0.3);
-        }
-
-        .schedule-list {
-            overflow-y: auto;
-            flex: 1;
-            padding-right: 5px;
-            scroll-behavior: smooth;
-        }
-
-        .schedule-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .schedule-list::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-        }
-
-        .schedule-list::-webkit-scrollbar-thumb {
-            background: rgba(76, 175, 80, 0.5);
-            border-radius: 10px;
-        }
-
-        .schedule-item {
-            background: rgba(255,255,255,0.05);
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 10px;
-            align-items: center;
-            border-left: 3px solid #666;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            border: 2px solid #1976d2;
             transition: all 0.3s;
-            animation: slideDown 0.3s;
         }
 
-        .schedule-item.current {
-            background: linear-gradient(90deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));
-            border-left-color: #4CAF50;
-        }
-
-        .schedule-item.passed {
-            opacity: 0.4;
-        }
-
-        .schedule-item.next {
-            background: rgba(255, 165, 0, 0.1);
-            border-left-color: #FFA500;
-        }
-
-        .schedule-stop-number {
-            background: rgba(255,255,255,0.1);
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .schedule-item.current .schedule-stop-number {
-            background: #4CAF50;
-        }
-
-        .schedule-stop-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .schedule-stop-name {
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .schedule-stop-time {
-            font-size: 11px;
-            color: #888;
-        }
-
-        .schedule-time-info {
-            text-align: right;
-        }
-
-        .schedule-time {
-            font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .estimated-time {
-            font-family: 'Orbitron', monospace;
-            font-size: 11px;
-            color: #FFA500;
-            margin-top: 3px;
-        }
-
-        .delay-badge {
-            grid-column: 2 / 4;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 5px;
-        }
-
-        .delay-badge.on-time {
-            background: rgba(76, 175, 80, 0.3);
-            color: #4CAF50;
-        }
-
-        .delay-badge.early {
-            background: rgba(33, 150, 243, 0.3);
-            color: #2196F3;
-        }
-
-        .delay-badge.late {
-            background: rgba(255, 152, 0, 0.3);
-            color: #FF9800;
-        }
-
-        .delay-badge.very-late {
-            background: rgba(244, 67, 54, 0.3);
-            color: #f44336;
-        }
-
-        /* ROUTE CARDS - STARE (do usunięcia w następnej wersji, zostają dla kompatybilności) */
-        .route-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.3s;
-            animation: slideIn 0.3s;
-        }
-
-        .route-card:hover {
+        .line-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 30px rgba(25, 118, 210, 0.5);
         }
 
-        .route-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .line-card h3 {
             margin-bottom: 15px;
+            font-size: 1.6em;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
         }
 
-        .route-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .route-badge {
-            background: linear-gradient(45deg, #4CAF50, #8BC34A);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .route-details {
-            color: #aaa;
-            margin-bottom: 15px;
+        .line-card p {
+            margin-bottom: 8px;
+            opacity: 0.95;
             font-size: 14px;
         }
 
-        .route-stops-preview {
+        .line-actions {
             display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .stop-chip {
-            background: rgba(255,255,255,0.1);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-        }
-
-        .route-actions {
-            display: grid;
-            grid-template-columns: 1fr auto auto auto;
             gap: 10px;
+            margin-top: 15px;
         }
 
-        /* MODAL */
+        .line-actions button {
+            flex: 1;
+            font-size: 13px;
+            padding: 10px;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
             animation: fadeIn 0.3s;
         }
 
-        .modal.active {
+        .modal.show {
             display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
-            background: #2a2a2a;
+            background: #1a1f3a;
             padding: 30px;
-            border-radius: 20px;
-            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            max-width: 600px;
             width: 90%;
-            animation: slideIn 0.3s;
+            border: 2px solid #2a3f5f;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .time-picker {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
+        .modal-content h2 {
+            margin: 0 0 20px 0;
+            border: none;
+            color: #4fc3f7;
+        }
+
+        .modal-buttons {
+            display: flex;
             gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            margin: 0;
+        }
+
+        /* Widok aktywnej trasy */
+        .route-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .route-main {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .route-header-bar {
+            background: #0f1529;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin: 20px 0;
+            border: 2px solid #2a3f5f;
         }
 
-        .time-picker input {
-            font-size: 48px;
-            text-align: center;
-            font-family: 'Orbitron', monospace;
+        .route-header-bar h2 {
+            margin: 0;
+            border: none;
+            font-size: 1.3em;
+        }
+
+        .clock-panel {
+            background: #0f1529;
             padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #2a3f5f;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
-        .time-separator {
-            font-size: 48px;
+        .clock-item {
+            text-align: center;
+        }
+
+        .clock-label {
+            color: #90a4ae;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .clock-value {
+            color: #4fc3f7;
+            font-size: 2em;
             font-weight: bold;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .timer-panel {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            color: white;
+            padding: 50px 30px;
+            border-radius: 12px;
+            text-align: center;
+            border: 3px solid #1976d2;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .current-stop-name {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .timer {
+            font-size: 10em;
+            font-weight: 900;
+            margin: 40px 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+            letter-spacing: 10px;
+            line-height: 1;
+        }
+
+        .timer.green {
+            color: #66bb6a;
+        }
+
+        .timer.yellow {
+            color: #ffeb3b;
+        }
+
+        .timer.orange {
+            color: #ff9800;
+        }
+
+        .timer.red {
+            color: #f44336;
+        }
+
+        .progress-info {
+            font-size: 1.5em;
+            margin-top: 20px;
+            opacity: 0.95;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .next-stop-btn {
+            font-size: 1.6em;
+            padding: 20px 50px;
+            margin-top: 30px;
+            background: white;
+            color: #1565c0;
+            font-weight: bold;
+        }
+
+        .next-stop-btn:hover {
+            background: #f5f5f5;
+            color: #0d47a1;
+        }
+
+        .schedule-panel {
+            background: #0f1529;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #2a3f5f;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 150px);
+        }
+
+        .schedule-header {
+            background: #1565c0;
+            color: white;
+            padding: 12px 15px;
+            font-size: 1em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .schedule-table-container {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .schedule-table {
+            width: 100%;
+        }
+
+        .schedule-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .schedule-table th {
+            background: #1a2035;
+            color: #4fc3f7;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #2a3f5f;
+        }
+
+        .schedule-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #2a3f5f;
+            font-size: 13px;
+        }
+
+        .schedule-table tr:hover {
+            background: #1a2035;
+        }
+
+        .schedule-table .current-row {
+            background: #1a4d2e;
+            border-left: 5px solid #66bb6a;
+        }
+
+        .schedule-table .passed-row {
+            opacity: 0.4;
+        }
+
+        .add-stop-form {
+            background: #0f1529;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #2a3f5f;
+        }
+
+        .add-stop-form h3 {
+            margin-bottom: 15px;
+            color: #81d4fa;
+            font-size: 1.2em;
+        }
+
+        .inline-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 12px;
+            align-items: end;
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #666;
+            color: #607d8b;
         }
 
-        .empty-state-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-
-        /* Keyboard hint */
-        .keyboard-hint {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(76, 175, 80, 0.9);
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 999;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-		        /* ============================================ */
-        /* WYSZUKIWARKI */
-        /* ============================================ */
-
-        .search-panel {
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-            padding: 15px;
+        .empty-state h3 {
+            font-size: 1.5em;
             margin-bottom: 15px;
+            color: #78909c;
         }
 
-        .search-box {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .search-box:last-of-type {
-            margin-bottom: 0;
-        }
-
-        .search-box input {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border: 2px solid rgba(255,255,255,0.2);
-            padding: 12px 15px;
+        .import-section {
+            background: #0f1529;
+            padding: 20px;
             border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.3s;
+            margin-top: 20px;
+            border: 2px solid #2a3f5f;
         }
 
-        .search-box input:focus {
-            background: rgba(255,255,255,0.15);
-            border-color: #4CAF50;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+        .import-section h3 {
+            margin-bottom: 15px;
+            color: #81d4fa;
+            font-size: 1.2em;
         }
 
-        .search-box input::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-
-        .search-results {
-            margin-top: 15px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-
-        .search-results.active {
-            max-height: 500px;
-            overflow-y: auto;
-            padding-top: 15px;
-            border-top: 2px solid rgba(76, 175, 80, 0.3);
-        }
-
-        .search-result-item {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.1));
-            border-left: 4px solid #4CAF50;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            animation: slideDown 0.3s;
-        }
-
-        .search-result-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(139, 195, 74, 0.2));
-        }
-
-        .search-result-header {
+        .import-buttons {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #2a3f5f;
+        }
+
+        .divider span {
+            background: #1a1f3a;
+            padding: 0 20px;
+            position: relative;
+            color: #90a4ae;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* Licznik pasażerów */
+        .passenger-counter {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 3px solid #4caf50;
+            z-index: 998;
+            min-width: 200px;
+        }
+
+        .passenger-counter.warning {
+            background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+            border-color: #ff9800;
+        }
+
+        .passenger-counter.danger {
+            background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+            border-color: #f44336;
+        }
+
+        .passenger-count {
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
             margin-bottom: 5px;
         }
 
-        .search-result-title {
-            font-weight: bold;
-            font-size: 16px;
-            color: #4CAF50;
-        }
-
-        .search-result-badge {
-            background: rgba(76, 175, 80, 0.3);
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .search-result-details {
-            font-size: 13px;
-            color: #aaa;
-            margin-bottom: 8px;
-        }
-
-        .search-result-path {
-            font-size: 11px;
-            color: #888;
-            font-style: italic;
-        }
-
-        .search-result-stops {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .search-stop-chip {
-            background: rgba(255,255,255,0.1);
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-
-        .search-stop-chip.highlight {
-            background: rgba(255, 193, 7, 0.4);
-            color: #FFC107;
-            font-weight: bold;
-        }
-
-        .no-results {
+        .passenger-label {
             text-align: center;
-            padding: 30px;
-            color: #666;
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .no-results-icon {
-            font-size: 48px;
+        .passenger-change {
+            position: fixed;
+            top: 140px;
+            left: 20px;
+            background: #1a1f3a;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 2px solid #2a3f5f;
+            z-index: 997;
+            min-width: 200px;
+            animation: slideInLeft 0.5s;
+        }
+
+        .passenger-change-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .passenger-change-item:last-child {
+            margin-bottom: 0;
+            padding-top: 8px;
+            border-top: 1px solid #2a3f5f;
+            font-weight: bold;
+        }
+
+        .passenger-change-item .label {
+            color: #90a4ae;
+        }
+
+        .passenger-change-item .value {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+
+        .passenger-change-item.exit .value {
+            color: #f44336;
+        }
+
+        .passenger-change-item.enter .value {
+            color: #66bb6a;
+        }
+
+        /* Event notification */
+        .event-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 2px solid #ff9800;
+            max-width: 350px;
+            z-index: 999;
+            animation: slideInLeft 0.5s, pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        .event-notification h4 {
             margin-bottom: 10px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* RESPONSIVE */
+        .event-notification p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #2a3f5f;
+            border-top: 5px solid #4fc3f7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #4fc3f7;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .firebase-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .firebase-status.connected {
+            background: #1b5e20;
+            color: #a5d6a7;
+            border: 2px solid #4caf50;
+        }
+
+        .firebase-status.disconnected {
+            background: #b71c1c;
+            color: #ef9a9a;
+            border: 2px solid #f44336;
+        }
+
+        .firebase-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        .firebase-status.connected .dot {
+            background: #4caf50;
+        }
+
+        .firebase-status.disconnected .dot {
+            background: #f44336;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            }
+            50% {
+                box-shadow: 0 8px 32px rgba(255, 152, 0, 0.8);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .folder-manager {
+            background: #0f1529;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #2a3f5f;
+        }
+
         @media (max-width: 1200px) {
-            .running-layout {
-                grid-template-columns: 1fr 350px;
-            }
-            
-            .timer {
-                font-size: 70px;
-                padding: 30px;
-            }
-            
-            .current-stop {
-                font-size: 42px;
+            .route-layout {
+                grid-template-columns: 1fr;
             }
 
-            .live-clock {
-                font-size: 20px;
-                padding: 10px 15px;
+            .schedule-panel {
+                max-height: 400px;
+            }
+
+            .timer {
+                font-size: 6em;
+            }
+
+            .current-stop-name {
+                font-size: 2em;
             }
         }
 
-        @media (max-width: 968px) {
-            .running-layout {
+        @media (max-width: 768px) {
+            .inline-form {
                 grid-template-columns: 1fr;
-                height: auto;
-                max-height: none;
             }
-            
-            .sidebar-column {
-                max-height: 500px;
-            }
-            
+
             .timer {
-                font-size: 55px;
-                padding: 30px;
+                font-size: 4em;
             }
-            
-            .current-stop {
-                font-size: 36px;
+
+            .current-stop-name {
+                font-size: 1.5em;
             }
-            
-            .input-group {
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .lines-list {
                 grid-template-columns: 1fr;
             }
 
-            .keyboard-hint {
-                bottom: 10px;
-                right: 10px;
-                font-size: 12px;
-                padding: 8px 15px;
-            }
-
-            .live-clock {
-                font-size: 18px;
-                padding: 8px 12px;
-            }
-
-            .controls {
+            .clock-panel {
                 grid-template-columns: 1fr;
+            }
+
+            .passenger-counter {
+                top: 10px;
+                left: 10px;
+                padding: 15px 20px;
+            }
+
+            .passenger-count {
+                font-size: 2em;
             }
         }
 
-        @media (max-width: 480px) {
-            .timer {
-                font-size: 60px;
-                padding: 20px;
-                letter-spacing: 5px;
-            }
-            
-            .current-stop {
-                font-size: 28px;
-            }
-            
-            .line-info {
-                font-size: 18px;
-            }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
 
-            .live-clock {
-                font-size: 16px;
-                padding: 6px 10px;
-            }
+        ::-webkit-scrollbar-track {
+            background: #0f1529;
+        }
 
-            .folder-header {
-                grid-template-columns: auto 1fr auto;
-            }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3f5f;
+            border-radius: 5px;
+        }
 
-            .folder-count {
-                display: none;
-            }
-
-            .route-tree-header {
-                grid-template-columns: 1fr auto;
-            }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4fc3f7;
         }
     </style>
-	</head>
+</head>
 <body>
-    <!-- ZEGAR NA ŻYWO -->
-    <div class="live-clock" id="liveClock">
-        <div id="clockTime">00:00:00</div>
-        <div class="clock-date" id="clockDate">Pon, 1 Sty 2024</div>
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Łączenie z Firebase...</div>
+    </div>
+
+    <!-- Firebase status indicator -->
+    <div id="firebaseStatus" class="firebase-status disconnected">
+        <span class="dot"></span>
+        <span>Firebase: Łączenie...</span>
     </div>
 
     <div class="container">
-        <!-- EKRAN KONFIGURACJI -->
-        <div class="setup-screen active">
-            <h1>🚌 System Przystanków</h1>
+        <h1>🚍 System MPK - Panel Kierowcy</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('lines')">📋 Lista Linii</button>
+            <button class="tab" onclick="switchTab('route')">🚦 Aktywna Trasa</button>
+            <button class="tab" onclick="switchTab('create')">➕ Tworzenie Linii</button>
+        </div>
+
+        <!-- Zakładka: Lista Linii -->
+        <div id="lines" class="tab-content active">
+            <h2>Dostępne Linie</h2>
             
-            <!-- NOWY PRZYCISK DODAWANIA -->
-            <button class="add-route-btn" id="toggleAddBtn" onclick="toggleAddForm()">
-                ➕ DODAJ NOWĄ LINIĘ
-            </button>
-
-            <!-- FORMULARZ DODAWANIA - UKRYTY DOMYŚLNIE -->
-            <div class="card quick-add" id="quickAddForm">
-                <h3>⚡ Szybkie tworzenie linii</h3>
-                <div class="input-group">
-                    <input type="text" id="lineNumber" placeholder="Numer linii (np. 157)">
-                    <input type="text" id="direction" placeholder="Kierunek (np. Dworzec)">
-                </div>
-                
-                <h3 style="margin-top: 20px;">➕ Dodawanie przystanków</h3>
-                <div class="input-group">
-                    <input type="text" id="stopName" placeholder="Nazwa przystanku">
-                    <input type="number" id="stopMinutes" placeholder="Minut" min="0" value="1">
-                    <button class="btn-primary btn-icon" onclick="addStop()">➕</button>
-                </div>
-                
-                <div class="stops-editor" id="stopsEditor">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🚏</div>
-                        <p>Dodaj przystanki aby utworzyć trasę</p>
+            <!-- Zarządzanie folderami -->
+            <div class="folder-manager">
+                <h3 style="color: #81d4fa; margin-bottom: 15px;">📁 Zarządzanie Folderami</h3>
+                <div class="inline-form">
+                    <div class="form-group" style="margin: 0;">
+                        <label>Nazwa Nowego Folderu:</label>
+                        <input type="text" id="newFolderName" placeholder="np. Linie Dzienne, Linie Nocne">
                     </div>
+                    <div></div>
+                    <button onclick="createFolder()" class="success">➕ Dodaj Folder</button>
                 </div>
-                
-                <button class="btn-primary" id="saveRouteBtn" onclick="saveRoute()" style="margin-top: 20px; width: 100%;">
-                    💾 Zapisz linię do Firebase
-                </button>
             </div>
 
-            <!-- SYSTEM GRUPOWANIA -->
-            <div class="card groups-container">
-                <h2>📂 Zarządzanie grupami i liniami</h2>
-                
-                <div class="group-controls">
-                    <input type="text" id="newGroupName" placeholder="Nazwa nowej grupy (np. Autobusy, Tramwaje...)">
-                    <button class="btn-primary" onclick="createGroup()">➕ Utwórz grupę</button>
-                </div>
-				                <!-- WYSZUKIWARKI -->
-                <div class="search-panel">
-                    <div class="search-box">
-                        <input type="text" id="searchLines" placeholder="🔍 Szukaj linii (np. 157, tramwaj...)">
-                        <button class="btn-secondary btn-icon" onclick="clearSearch('searchLines')">✖️</button>
-                    </div>
-                    
-                    <div class="search-box">
-                        <input type="text" id="searchStops" placeholder="🚏 Szukaj po przystanku lub kierunku...">
-                        <button class="btn-secondary btn-icon" onclick="clearSearch('searchStops')">✖️</button>
-                    </div>
-                    
-                    <div class="search-results" id="searchResults"></div>
+            <div id="linesList"></div>
+        </div>
+
+        <!-- Zakładka: Aktywna Trasa -->
+        <div id="route" class="tab-content">
+            <div id="noActiveRoute" class="empty-state">
+                <h3>Brak Aktywnej Trasy</h3>
+                <p>Wybierz linię z listy aby rozpocząć kurs</p>
+            </div>
+            <div id="activeRoute" style="display: none;">
+                <div class="route-header-bar">
+                    <h2 id="routeTitle"></h2>
+                    <button class="danger" onclick="stopRoute()">⏹ Zakończ</button>
                 </div>
 
-                <!-- DRZEWO GRUP I LINII -->
-                <div class="tree-view" id="treeView">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📁</div>
-                        <p>Brak grup i linii</p>
-                        <p style="font-size: 14px; margin-top: 10px; color: #666;">Utwórz grupy aby uporządkować linie</p>
+                <div class="clock-panel">
+                    <div class="clock-item">
+                        <div class="clock-label">Aktualny Czas</div>
+                        <div class="clock-value" id="currentTimeDisplay">00:00:00</div>
+                    </div>
+                    <div class="clock-item">
+                        <div class="clock-label">Przewidywany Koniec</div>
+                        <div class="clock-value" id="endTimeDisplay">00:00:00</div>
+                    </div>
+                </div>
+
+                <div class="route-layout">
+                    <div class="route-main">
+                        <div class="timer-panel">
+                            <div class="current-stop-name" id="currentStopName">---</div>
+                            <div class="timer green" id="timer">00:00</div>
+                            <div class="progress-info" id="progressInfo">Przystanek 0 z 0</div>
+                            <button class="next-stop-btn" onclick="nextStop()" id="nextStopBtn">
+                                ⏎ ENTER - Odjazd
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="schedule-panel">
+                        <div class="schedule-header">📍 Rozkład</div>
+                        <div class="schedule-table-container">
+                            <div class="schedule-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Przystanek</th>
+                                            <th>Plan</th>
+                                            <th>Prognoza</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scheduleBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- EKRAN DZIAŁANIA - NOWY LAYOUT -->
-        <div class="running-screen">
-            <div class="keyboard-hint">⌨️ ENTER/SPACJA = Następny | ← = Cofnij | ESC = Zakończ</div>
-            <div class="running-layout">
-                <!-- LEWA KOLUMNA - GŁÓWNY WYŚWIETLACZ -->
-                <div class="main-display-column">
-                    <div class="bus-display">
-                        <!-- ETA DO KOŃCA TRASY -->
-                        <div class="eta-badge" id="etaBadge">
-                            <div class="eta-label">Koniec trasy o</div>
-                            <div class="eta-time" id="etaTime">--:--</div>
-                        </div>
+        <!-- Zakładka: Tworzenie Linii -->
+        <div id="create" class="tab-content">
+            <h2>Utwórz Nową Linię</h2>
 
-                        <div class="line-info" id="lineInfo">LINIA 1 → CENTRUM</div>
-                        <div class="next-stop-label">🚏 Następny przystanek</div>
-                        <div class="current-stop" id="currentStopName">DWORZEC GŁÓWNY</div>
-                        
-                        <div class="timer-container">
-                            <div class="timer" id="timer">0:00</div>
-                            <div class="delay-indicator" id="delayIndicator">NA CZAS</div>
-                        </div>
-                    </div>
-
-                    <div class="controls">
-                        <button class="btn-warning btn-icon" onclick="previousStop()" id="prevBtn" title="Cofnij (←)">
-                            ◀
-                        </button>
-                        <button class="btn-primary" onclick="departStop()">
-                            🚀 ODJAZD
-                        </button>
-                        <button class="btn-primary btn-icon" onclick="departStop()" title="Następny (ENTER/SPACJA)">
-                            ▶
-                        </button>
-                        <button class="btn-danger" onclick="endRoute()">
-                            ⏹️ KONIEC
-                        </button>
-                    </div>
+            <!-- Import z JSON -->
+            <div class="import-section">
+                <h3>📥 Import z JSON</h3>
+                <div class="form-group">
+                    <label>Wklej dane w formacie JSON:</label>
+                    <textarea id="jsonImportInput" placeholder='{"Line": "1", "Destination": "Rzędzin Pętla", "Stops": ["Przystanek 1", "Przystanek 2"]}'></textarea>
                 </div>
-
-                <!-- PRAWA KOLUMNA - SIDEBAR -->
-                <div class="sidebar-column">
-                    <!-- STATUS -->
-                    <div class="status-bar">
-                        <div class="status-item">
-                            <div class="status-label">Przystanek</div>
-                            <div class="status-value" id="stopCounter">1/5</div>
-                        </div>
-                        <div class="status-item">
-                            <div class="status-label">Postęp trasy</div>
-                            <div class="status-value" id="routeProgress">0%</div>
-                        </div>
-                        <div class="status-item">
-                            <div class="status-label">Średnie opóźnienie</div>
-                            <div class="status-value" id="avgDelay">0:00</div>
-                        </div>
-                    </div>
-
-                    <div class="route-progress">
-                        <div class="route-progress-bar" id="progressBar" style="width: 0%"></div>
-                    </div>
-
-                    <!-- ROZKŁAD JAZDY -->
-                    <div class="schedule-container">
-                        <div class="schedule-header">
-                            <h2 style="margin: 0; font-size: 1.2em;">📍 Rozkład jazdy</h2>
-                        </div>
-                        <div class="schedule-list" id="scheduleList"></div>
-                    </div>
+                <div class="import-buttons">
+                    <button onclick="importFromJSON()" class="success">📥 Importuj i Edytuj</button>
+                    <button onclick="document.getElementById('jsonImportInput').value = ''" class="danger">🗑️ Wyczyść</button>
                 </div>
             </div>
+
+            <div class="divider"><span>lub</span></div>
+
+            <!-- Ręczne tworzenie -->
+            <div class="form-group">
+                <label>Nazwa Linii / Numer:</label>
+                <input type="text" id="lineName" placeholder="np. 42, A1, Północna">
+            </div>
+
+            <div class="add-stop-form">
+                <h3>Dodaj Przystanki</h3>
+                <div class="inline-form">
+                    <div class="form-group" style="margin: 0;">
+                        <label>Nazwa Przystanku:</label>
+                        <input type="text" id="stopName" placeholder="np. Dworzec Główny" onkeypress="handleStopEnter(event)">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Czas (min):</label>
+                        <input type="number" id="stopTime" placeholder="1" min="0" value="1" onkeypress="handleStopEnter(event)">
+                    </div>
+                    <button onclick="addStop()" class="success">Dodaj</button>
+                </div>
+                <p style="margin-top: 10px; color: #607d8b; font-size: 13px;">
+                    ℹ️ Naciśnij ENTER aby szybko dodać przystanek. Dla pierwszego przystanku ustaw czas na 0.
+                </p>
+            </div>
+
+            <div id="currentStops" class="stops-list" style="display: none;">
+                <h3 style="color: #81d4fa; margin-bottom: 15px;">Przystanki na trasie:</h3>
+                <div id="stopsContainer"></div>
+            </div>
+
+            <button onclick="saveLine()" style="margin-top: 20px; font-size: 16px;">💾 Zapisz Linię</button>
         </div>
     </div>
 
-    <!-- MODAL WYBORU CZASU -->
-    <div class="modal" id="timeModal">
+    <!-- Modal Start Trasy -->
+    <div id="startModal" class="modal">
         <div class="modal-content">
-            <h2 style="text-align: center; margin-bottom: 20px;">🕐 Wybierz czas startu</h2>
-            <div class="time-picker">
-                <input type="number" id="hourInput" min="0" max="23" value="08" />
-                <div class="time-separator">:</div>
-                <input type="number" id="minuteInput" min="0" max="59" value="00" />
+            <h2>🚦 Rozpocznij Kurs</h2>
+            <div class="form-group">
+                <label>Godzina Rozpoczęcia Kursu:</label>
+                <input type="time" id="modalStartTime" value="" step="60">
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-secondary" onclick="setCurrentTime()">⏰ Teraz</button>
-                <button class="btn-primary" onclick="confirmStartTime()">✅ Start</button>
+            <div class="form-group">
+                <label>Przystanek Początkowy:</label>
+                <select id="modalStartStop"></select>
+            </div>
+            <div class="form-group">
+                <label>Przystanek Końcowy:</label>
+                <select id="modalEndStop"></select>
+            </div>
+            <div class="modal-buttons">
+                <button class="success" onclick="confirmStartRoute()">▶️ Start</button>
+                <button class="danger" onclick="closeStartModal()">❌ Anuluj</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PRZENOSZENIA DO GRUPY -->
-    <div class="modal" id="moveToGroupModal">
+    <!-- Modal Edycji Importu -->
+    <div id="importEditModal" class="modal">
         <div class="modal-content">
-            <h2 style="text-align: center; margin-bottom: 20px;">📁 Przenieś do grupy</h2>
-            <div id="groupSelectionList" style="max-height: 400px; overflow-y: auto;"></div>
-            <button class="btn-danger" onclick="closeMoveModal()" style="margin-top: 20px; width: 100%;">❌ Anuluj</button>
+            <h2>✏️ Edytuj Zaimportowaną Linię</h2>
+            <div class="form-group">
+                <label>Nazwa Linii:</label>
+                <input type="text" id="importLineName" readonly style="background: #1a2035;">
+            </div>
+            <div class="form-group">
+                <label>Destinacja:</label>
+                <input type="text" id="importDestination" readonly style="background: #1a2035;">
+            </div>
+            <div class="stops-list">
+                <h3 style="color: #81d4fa; margin-bottom: 15px;">Przystanki - Ustaw czasy:</h3>
+                <div id="importStopsContainer"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="success" onclick="confirmImport()">✅ Zatwierdź i Zapisz</button>
+                <button class="danger" onclick="closeImportEditModal()">❌ Anuluj</button>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, get, push, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDM2EOp4JioeWWPRrRbOiVHUKbCTnemgvA",
-            authDomain: "b57-5b0cc.firebaseapp.com",
-            databaseURL: "https://b57-5b0cc-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "b57-5b0cc",
-            storageBucket: "b57-5b0cc.firebasestorage.app",
-            messagingSenderId: "119379327363",
-            appId: "1:119379327363:web:2006e0e0c53c6ab22b1eb6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        window.database = database;
-        window.dbRef = ref;
-        window.dbSet = set;
-        window.dbGet = get;
-        window.dbPush = push;
-        window.dbRemove = remove;
-
-        loadGroups();
-    </script>
+    <!-- Modal Przypisania do Folderu -->
+    <div id="folderAssignModal" class="modal">
+        <div class="modal-content">
+            <h2>📁 Przenieś do Folderu</h2>
+            <div class="form-group">
+                <label>Wybierz Folder:</label>
+                <select id="folderSelect">
+                    <option value="">Brak folderu</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="success" onclick="confirmFolderAssign()">✅ Przenieś</button>
+                <button class="danger" onclick="closeFolderAssignModal()">❌ Anuluj</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        let stops = [];
-        let currentRoute = null;
-        let currentStopIndex = 0;
-        let plannedTimes = [];
+        // ===== FIREBASE CONFIGURATION =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3-e1xwK59tcs7Ydxem9zg0-9XZv2PdKU",
+            authDomain: "geoule.firebaseapp.com",
+            databaseURL: "https://geoule-default-rtdb.firebaseio.com",
+            projectId: "geoule",
+            storageBucket: "geoule.firebasestorage.app",
+            messagingSenderId: "55343832686",
+            appId: "1:55343832686:web:2b9f8c6e6659b33f01907f",
+            measurementId: "G-53ZVNSPP3V"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Globalne zmienne
+        let currentStops = [];
+        let lines = [];
+        let folders = [];
+        let activeRouteData = null;
         let timerInterval = null;
         let clockInterval = null;
-        let delayHistory = [];
-        let selectedRouteId = null;
-        let editingRouteId = null;
-        let groups = {}; // { groupId: { name, children: [groupId/routeId], parent: groupId } }
-        let routes = {}; // { routeId: { lineNumber, direction, stops, parentGroup } }
-        let moveRouteId = null; // ID linii do przeniesienia
+        let eventCheckInterval = null;
+        let routeStartTime = null;
+        let currentStopIndex = 0;
+        let currentDelay = 0;
+        let pendingLineId = null;
+        let importedData = null;
+        let editMode = false;
+        let editLineId = null;
+        let pendingFolderLineId = null;
+        let routeStartStopIndex = 0;
+        let routeEndStopIndex = 0;
+        let passengerCount = 0;
+        let firebaseConnected = false;
 
-        // ========================================
-        // NOWA FUNKCJA: TOGGLE FORMULARZA
-        // ========================================
-        function toggleAddForm() {
-            const form = document.getElementById('quickAddForm');
-            const btn = document.getElementById('toggleAddBtn');
-            
-            if (form.classList.contains('active')) {
-                form.classList.remove('active');
-                btn.classList.remove('active');
-                btn.textContent = '➕ DODAJ NOWĄ LINIĘ';
-            } else {
-                form.classList.add('active');
-                btn.classList.add('active');
-                btn.textContent = '❌ ANULUJ DODAWANIE';
-                
-                // Scroll do formularza
-                setTimeout(() => {
-                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
+        // Lista losowych wydarzeń z wagami
+        const randomEvents = [
+            { icon: "♿", title: "Osoba niepełnosprawna", text: "Pasażer prosi o wyciągnięcie rampy", weight: 8 },
+            { icon: "🍺", title: "Pijany pasażer", text: "Nietrzeźwa osoba wchodzi do autobusu", weight: 16 },
+            { icon: "😠", title: "Awantura", text: "Nastolatki głośno słuchają muzyki i przeszkadzają", weight: 8 },
+            { icon: "🔧", title: "Wandalizm", text: "Ktoś bazgrze po siedzeniu", weight: 4 },
+            { icon: "🎫", title: "Kontrola biletów", text: "Kontroler wchodzi do autobusu", weight: 20 },
+            { icon: "👴", title: "Pomoc seniorowi", text: "Starszy pasażer potrzebuje pomocy przy wsiadaniu", weight: 16 },
+            { icon: "🚨", title: "Alarm", text: "Ktoś przypadkowo nacisnął przycisk alarmowy", weight: 4 },
+            { icon: "🐕", title: "Zwierzę", text: "Pasażer z dużym psem bez kagańca", weight: 12 },
+            { icon: "🤢", title: "Pasażer źle się czuje", text: "Ktoś prosi o zatrzymanie, bo mu niedobrze", weight: 8 },
+            { icon: "📱", title: "Zgubiony telefon", text: "Znaleziono telefon na siedzeniu", weight: 4 }
+        ];
+
+        const totalWeight = randomEvents.reduce((sum, event) => sum + event.weight, 0);
+
+        // ===== FIREBASE FUNCTIONS =====
+        
+        function updateFirebaseStatus(connected, message) {
+            const statusEl = document.getElementById('firebaseStatus');
+            statusEl.className = `firebase-status ${connected ? 'connected' : 'disconnected'}`;
+            statusEl.innerHTML = `<span class="dot"></span><span>Firebase: ${message}</span>`;
+            firebaseConnected = connected;
+        }
+
+        async function loadLinesFromFirebase() {
+            try {
+                const snapshot = await database.ref('busLines').once('value');
+                const data = snapshot.val();
+                return data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+            } catch (error) {
+                console.error('Błąd pobierania linii z Firebase:', error);
+                return [];
             }
         }
 
-        // ========================================
-        // SYSTEM GRUPOWANIA
-        // ========================================
-
-        async function createGroup(parentId = null) {
-            const name = document.getElementById('newGroupName').value.trim();
-            if (!name) {
-                alert('❌ Podaj nazwę grupy!');
-                return;
+        async function saveLinesToFirebase() {
+            try {
+                await database.ref('busLines').set(lines);
+                console.log('Linie zapisane do Firebase');
+            } catch (error) {
+                console.error('Błąd zapisywania linii do Firebase:', error);
             }
+        }
+
+        async function loadFoldersFromFirebase() {
+            try {
+                const snapshot = await database.ref('busFolders').once('value');
+                const data = snapshot.val();
+                return data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+            } catch (error) {
+                console.error('Błąd pobierania folderów z Firebase:', error);
+                return [];
+            }
+        }
+
+        async function saveFoldersToFirebase() {
+            try {
+                await database.ref('busFolders').set(folders);
+                console.log('Foldery zapisane do Firebase');
+            } catch (error) {
+                console.error('Błąd zapisywania folderów do Firebase:', error);
+            }
+        }
+
+        async function initializeData() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = loadingOverlay.querySelector('.loading-text');
 
             try {
-                const groupRef = window.dbPush(window.dbRef(window.database, 'groups'));
-                await window.dbSet(groupRef, {
-                    name,
-                    parent: parentId,
-                    children: [],
-                    created: new Date().toISOString()
-                });
+                loadingText.textContent = 'Sprawdzanie Firebase...';
+                
+                // Sprawdź czy są dane w Firebase
+                const firebaseLines = await loadLinesFromFirebase();
+                const firebaseFolders = await loadFoldersFromFirebase();
+                
+                const firebaseEmpty = firebaseLines.length === 0 && firebaseFolders.length === 0;
+                
+                if (firebaseEmpty) {
+                    loadingText.textContent = 'Firebase pusty - migracja z localStorage...';
+                    console.log('Firebase pusty - sprawdzam localStorage...');
+                    
+                    // Pobierz dane z localStorage
+                    const localLinesData = localStorage.getItem('busLines');
+                    const localFoldersData = localStorage.getItem('busFolders');
+                    
+                    if (localLinesData) {
+                        lines = JSON.parse(localLinesData);
+                        console.log(`Znaleziono ${lines.length} linii w localStorage`);
+                    }
+                    
+                    if (localFoldersData) {
+                        folders = JSON.parse(localFoldersData);
+                        console.log(`Znaleziono ${folders.length} folderów w localStorage`);
+                    }
+                    
+                    // Prześlij do Firebase jeśli są jakieś dane
+                    if (lines.length > 0 || folders.length > 0) {
+                        loadingText.textContent = 'Przesyłanie danych do Firebase...';
+                        await saveLinesToFirebase();
+                        await saveFoldersToFirebase();
+                        console.log('Dane przesłane do Firebase!');
+                    }
+                    
+                    updateFirebaseStatus(true, 'Połączono (migracja)');
+                } else {
+                    loadingText.textContent = 'Pobieranie danych z Firebase...';
+                    console.log('Pobieranie danych z Firebase...');
+                    
+                    // Użyj danych z Firebase
+                    lines = firebaseLines;
+                    folders = firebaseFolders;
+                    
+                    console.log(`Pobrano ${lines.length} linii i ${folders.length} folderów z Firebase`);
+                    updateFirebaseStatus(true, 'Połączono');
+                }
+                
+                // Ukryj loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Wyświetl dane
+                displayLines();
+                
+            } catch (error) {
+                console.error('Błąd inicjalizacji:', error);
+                loadingText.textContent = 'Błąd połączenia - używam localStorage...';
+                updateFirebaseStatus(false, 'Błąd połączenia');
+                
+                // Fallback do localStorage
+                loadLinesLocal();
+                loadFoldersLocal();
+                displayLines();
+                
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                }, 2000);
+            }
+        }
 
-                if (parentId) {
-                    // Dodaj do rodzica
-                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${parentId}`));
-                    if (parentSnapshot.exists()) {
-                        const parent = parentSnapshot.val();
-                        parent.children = parent.children || [];
-                        parent.children.push(groupRef.key);
-                        await window.dbSet(window.dbRef(window.database, `groups/${parentId}`), parent);
+        // Lokalne funkcje (fallback)
+        function loadLinesLocal() {
+            const saved = localStorage.getItem('busLines');
+            if (saved) {
+                lines = JSON.parse(saved);
+            }
+        }
+
+        function loadFoldersLocal() {
+            const saved = localStorage.getItem('busFolders');
+            if (saved) {
+                folders = JSON.parse(saved);
+            }
+        }
+
+        // Inicjalizacja
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicjalizuj dane z Firebase
+            initializeData();
+            
+            updateModalTime();
+            
+            // Obsługa klawisza Enter
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && activeRouteData && currentStopIndex <= routeEndStopIndex) {
+                    nextStop();
+                }
+            });
+
+            // Nasłuchuj zmian w Firebase (real-time sync)
+            database.ref('busLines').on('value', (snapshot) => {
+                if (firebaseConnected) {
+                    const data = snapshot.val();
+                    if (data) {
+                        lines = Array.isArray(data) ? data : Object.values(data);
+                        displayLines();
                     }
                 }
+            });
 
-                document.getElementById('newGroupName').value = '';
-                alert('✅ Grupa utworzona!');
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd tworzenia grupy:', error);
-                alert('❌ Błąd podczas tworzenia grupy!');
-            }
-        }
-
-        async function loadGroups() {
-            try {
-                const [groupsSnapshot, routesSnapshot] = await Promise.all([
-                    window.dbGet(window.dbRef(window.database, 'groups')),
-                    window.dbGet(window.dbRef(window.database, 'routes'))
-                ]);
-
-                groups = groupsSnapshot.exists() ? groupsSnapshot.val() : {};
-                routes = routesSnapshot.exists() ? routesSnapshot.val() : {};
-
-                renderTree();
-            } catch (error) {
-                console.error('Błąd ładowania danych:', error);
-            }
-        }
-		        // ========================================
-        // WYSZUKIWARKI
-        // ========================================
-
-        let searchTimeout = null;
-
-        // Event listenery dla wyszukiwarek
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchLines = document.getElementById('searchLines');
-            const searchStops = document.getElementById('searchStops');
-            
-            if (searchLines) {
-                searchLines.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => performSearch(), 300);
-                });
-            }
-            
-            if (searchStops) {
-                searchStops.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => performSearch(), 300);
-                });
-            }
+            database.ref('busFolders').on('value', (snapshot) => {
+                if (firebaseConnected) {
+                    const data = snapshot.val();
+                    if (data) {
+                        folders = Array.isArray(data) ? data : Object.values(data);
+                        displayLines();
+                    }
+                }
+            });
         });
 
-        function performSearch() {
-            const lineQuery = document.getElementById('searchLines').value.trim().toLowerCase();
-            const stopQuery = document.getElementById('searchStops').value.trim().toLowerCase();
-            
-            if (!lineQuery && !stopQuery) {
-                document.getElementById('searchResults').classList.remove('active');
-                document.getElementById('searchResults').innerHTML = '';
-                return;
-            }
-
-            const results = [];
-
-            Object.entries(routes).forEach(([id, route]) => {
-                let score = 0;
-                let matchedStops = [];
-                let matchType = '';
-
-                // Wyszukiwanie po nazwie linii
-                if (lineQuery) {
-                    const lineNumber = route.lineNumber.toLowerCase();
-                    const direction = route.direction.toLowerCase();
-                    
-                    if (lineNumber.includes(lineQuery)) {
-                        score += 10;
-                        matchType = 'linia';
-                    }
-                    if (direction.includes(lineQuery)) {
-                        score += 5;
-                        matchType = matchType ? 'linia+kierunek' : 'kierunek';
-                    }
-                }
-
-                // Wyszukiwanie po przystankach/kierunku
-                if (stopQuery) {
-                    const direction = route.direction.toLowerCase();
-                    
-                    if (direction.includes(stopQuery)) {
-                        score += 8;
-                        matchType = matchType ? matchType + '+kierunek' : 'kierunek';
-                    }
-
-                    route.stops.forEach((stop, index) => {
-                        if (stop.name.toLowerCase().includes(stopQuery)) {
-                            score += 3;
-                            matchedStops.push(index);
-                            matchType = matchType ? matchType + '+przystanek' : 'przystanek';
-                        }
-                    });
-                }
-
-                if (score > 0) {
-                    results.push({
-                        id,
-                        route,
-                        score,
-                        matchedStops,
-                        matchType
-                    });
-                }
-            });
-
-            // Sortuj po score
-            results.sort((a, b) => b.score - a.score);
-
-            displaySearchResults(results, stopQuery);
-        }
-
-        function displaySearchResults(results, highlightQuery) {
-            const container = document.getElementById('searchResults');
-            
-            if (results.length === 0) {
-                container.innerHTML = `
-                    <div class="no-results">
-                        <div class="no-results-icon">🔍</div>
-                        <p>Brak wyników</p>
-                    </div>
-                `;
-                container.classList.add('active');
-                return;
-            }
-
-            container.innerHTML = '';
-            container.classList.add('active');
-
-            results.forEach(result => {
-                const { id, route, matchedStops, matchType } = result;
-                const totalTime = route.stops.reduce((sum, s) => sum + s.minutes, 0);
-                
-                // Znajdź ścieżkę grupy
-                const groupPath = getGroupPath(route.parentGroup);
-                
-                const div = document.createElement('div');
-                div.className = 'search-result-item';
-                div.onclick = () => {
-                    highlightRouteInTree(id);
-                };
-
-                let stopsHtml = '';
-                if (matchedStops.length > 0 || highlightQuery) {
-                    stopsHtml = '<div class="search-result-stops">';
-                    route.stops.forEach((stop, index) => {
-                        const isMatched = matchedStops.includes(index);
-                        const chipClass = isMatched ? 'search-stop-chip highlight' : 'search-stop-chip';
-                        stopsHtml += `<div class="${chipClass}">${stop.name}</div>`;
-                    });
-                    stopsHtml += '</div>';
-                }
-
-                div.innerHTML = `
-                    <div class="search-result-header">
-                        <div class="search-result-title">🚌 Linia ${route.lineNumber}</div>
-                        <div class="search-result-badge">${matchType}</div>
-                    </div>
-                    <div class="search-result-details">
-                        📍 ${route.direction} • ${route.stops.length} przystanków • ${totalTime} min
-                    </div>
-                    ${groupPath ? `<div class="search-result-path">📁 ${groupPath}</div>` : ''}
-                    ${stopsHtml}
-                `;
-
-                container.appendChild(div);
-            });
-        }
-
-        function getGroupPath(groupId) {
-            if (!groupId || !groups[groupId]) return '';
-            
-            const path = [];
-            let currentId = groupId;
-            
-            while (currentId && groups[currentId]) {
-                path.unshift(groups[currentId].name);
-                currentId = groups[currentId].parent;
-            }
-            
-            return path.join(' > ');
-        }
-
-        function highlightRouteInTree(routeId) {
-            const route = routes[routeId];
-            if (!route) return;
-
-            // Rozwiń wszystkie grupy w ścieżce
-            let currentGroupId = route.parentGroup;
-            while (currentGroupId && groups[currentGroupId]) {
-                const toggle = document.getElementById(`toggle-${currentGroupId}`);
-                const content = document.getElementById(`content-${currentGroupId}`);
-                
-                if (toggle && content) {
-                    content.classList.add('expanded');
-                    toggle.classList.add('expanded');
-                }
-                
-                currentGroupId = groups[currentGroupId].parent;
-            }
-
-            // Przewiń do elementu
-            setTimeout(() => {
-                const treeView = document.getElementById('treeView');
-                const routeElements = treeView.querySelectorAll('.tree-route');
-                
-                routeElements.forEach(el => {
-                    if (el.innerHTML.includes(route.lineNumber) && el.innerHTML.includes(route.direction)) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        
-                        // Efekt podświetlenia
-                        el.style.boxShadow = '0 0 20px rgba(76, 175, 80, 0.8)';
-                        el.style.transform = 'scale(1.02)';
-                        
-                        setTimeout(() => {
-                            el.style.boxShadow = '';
-                            el.style.transform = '';
-                        }, 2000);
-                    }
-                });
-            }, 300);
-        }
-
-        function clearSearch(inputId) {
-            document.getElementById(inputId).value = '';
-            performSearch();
-        }
-
-        function renderTree() {
-            const treeView = document.getElementById('treeView');
-            
-            // Znajdź grupy główne (bez rodzica)
-            const rootGroups = Object.entries(groups).filter(([id, group]) => !group.parent);
-            
-            // Znajdź linie bez grupy
-            const orphanRoutes = Object.entries(routes).filter(([id, route]) => !route.parentGroup);
-
-            if (rootGroups.length === 0 && orphanRoutes.length === 0) {
-                treeView.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📁</div>
-                        <p>Brak grup i linii</p>
-                        <p style="font-size: 14px; margin-top: 10px; color: #666;">Utwórz grupy aby uporządkować linie</p>
-                    </div>
-                `;
-                return;
-            }
-
-            treeView.innerHTML = '';
-
-            // Renderuj grupy główne
-            rootGroups.forEach(([id, group]) => {
-                treeView.appendChild(renderGroup(id, group, 1));
-            });
-
-            // Renderuj linie bez grupy
-            if (orphanRoutes.length > 0) {
-                const orphanSection = document.createElement('div');
-                orphanSection.style.marginTop = '15px';
-                orphanSection.innerHTML = '<h3 style="color: #888; font-size: 14px; margin-bottom: 10px;">📌 Linie bez grupy</h3>';
-                
-                orphanRoutes.forEach(([id, route]) => {
-                    orphanSection.appendChild(renderRoute(id, route));
-                });
-                
-                treeView.appendChild(orphanSection);
-            }
-        }
-
-        function renderGroup(groupId, group, level = 1) {
-            const div = document.createElement('div');
-            div.className = `tree-folder level-${Math.min(level, 3)}`;
-            
-            const children = group.children || [];
-            const childCount = children.length;
-            
-            // Ikona zależna od poziomu
-            const icons = ['📁', '📂', '🗂️'];
-            const icon = icons[Math.min(level - 1, 2)];
-
-            div.innerHTML = `
-                <div class="folder-header" onclick="toggleFolder('${groupId}')">
-                    <div class="folder-toggle" id="toggle-${groupId}">▶</div>
-                    <div class="folder-icon">${icon}</div>
-                    <div class="folder-name">${group.name}</div>
-                    <div class="folder-count">${childCount}</div>
-                    <div class="folder-actions" onclick="event.stopPropagation()">
-                        <button class="btn-primary" onclick="createSubgroup('${groupId}')" title="Dodaj podgrupę">➕</button>
-                        <button class="btn-warning" onclick="renameGroup('${groupId}')" title="Zmień nazwę">✏️</button>
-                        <button class="btn-danger" onclick="deleteGroup('${groupId}')" title="Usuń grupę">🗑️</button>
-                    </div>
-                </div>
-                <div class="folder-content" id="content-${groupId}">
-                    <div class="folder-children" id="children-${groupId}"></div>
-                </div>
-            `;
-
-            // Renderuj dzieci po dodaniu do DOM
-            setTimeout(() => {
-                const childrenContainer = document.getElementById(`children-${groupId}`);
-                if (childrenContainer && children.length > 0) {
-                    children.forEach(childId => {
-                        if (groups[childId]) {
-                            // To jest podgrupa
-                            childrenContainer.appendChild(renderGroup(childId, groups[childId], level + 1));
-                        } else if (routes[childId]) {
-                            // To jest linia
-                            childrenContainer.appendChild(renderRoute(childId, routes[childId]));
-                        }
-                    });
-                }
-            }, 0);
-
-            return div;
-        }
-
-        function renderRoute(routeId, route) {
-            const div = document.createElement('div');
-            div.className = 'tree-route';
-            
-            const totalTime = route.stops.reduce((sum, s) => sum + s.minutes, 0);
-            
-            div.innerHTML = `
-                <div class="route-tree-header">
-                    <div class="folder-icon">🚌</div>
-                    <div class="route-tree-info">
-                        <div class="route-tree-title">Linia ${route.lineNumber} → ${route.direction}</div>
-                        <div class="route-tree-details">${route.stops.length} przystanków • ${totalTime} min</div>
-                    </div>
-                    <div class="route-tree-actions">
-                        <button class="btn-primary" onclick="startRoute('${routeId}')" title="Uruchom">▶️</button>
-                        <button class="btn-secondary" onclick="openMoveModal('${routeId}')" title="Przenieś">📁</button>
-                        <button class="btn-warning" onclick="editRoute('${routeId}')" title="Edytuj">✏️</button>
-                        <button class="btn-danger" onclick="deleteRoute('${routeId}')" title="Usuń">🗑️</button>
-                    </div>
-                </div>
-            `;
-
-            return div;
-        }
-
-        function toggleFolder(groupId) {
-            const toggle = document.getElementById(`toggle-${groupId}`);
-            const content = document.getElementById(`content-${groupId}`);
-            
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                toggle.classList.remove('expanded');
-            } else {
-                content.classList.add('expanded');
-                toggle.classList.add('expanded');
-            }
-        }
-
-        async function createSubgroup(parentId) {
-            const name = prompt('Nazwa podgrupy:');
-            if (!name || !name.trim()) return;
-
-            try {
-                const groupRef = window.dbPush(window.dbRef(window.database, 'groups'));
-                await window.dbSet(groupRef, {
-                    name: name.trim(),
-                    parent: parentId,
-                    children: [],
-                    created: new Date().toISOString()
-                });
-
-                // Dodaj do rodzica
-                const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${parentId}`));
-                if (parentSnapshot.exists()) {
-                    const parent = parentSnapshot.val();
-                    parent.children = parent.children || [];
-                    parent.children.push(groupRef.key);
-                    await window.dbSet(window.dbRef(window.database, `groups/${parentId}`), parent);
-                }
-
-                alert('✅ Podgrupa utworzona!');
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd:', error);
-                alert('❌ Błąd podczas tworzenia podgrupy!');
-            }
-        }
-
-        async function renameGroup(groupId) {
-            const group = groups[groupId];
-            if (!group) return;
-
-            const newName = prompt('Nowa nazwa grupy:', group.name);
-            if (!newName || !newName.trim()) return;
-
-            try {
-                await window.dbSet(window.dbRef(window.database, `groups/${groupId}/name`), newName.trim());
-                alert('✅ Nazwa zmieniona!');
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd:', error);
-                alert('❌ Błąd podczas zmiany nazwy!');
-            }
-        }
-
-        async function deleteGroup(groupId) {
-            const group = groups[groupId];
-            if (!group) return;
-
-            const children = group.children || [];
-            if (children.length > 0) {
-                if (!confirm(`⚠️ Ta grupa zawiera ${children.length} elementów. Usuń ją wraz z zawartością?`)) {
-                    return;
-                }
-            } else {
-                if (!confirm(`🗑️ Usunąć grupę "${group.name}"?`)) {
-                    return;
-                }
-            }
-
-            try {
-                // Usuń rekurencyjnie dzieci
-                for (const childId of children) {
-                    if (groups[childId]) {
-                        await deleteGroup(childId);
-                    } else if (routes[childId]) {
-                        await window.dbRemove(window.dbRef(window.database, `routes/${childId}`));
-                    }
-                }
-
-                // Usuń z rodzica
-                if (group.parent) {
-                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${group.parent}`));
-                    if (parentSnapshot.exists()) {
-                        const parent = parentSnapshot.val();
-                        parent.children = (parent.children || []).filter(id => id !== groupId);
-                        await window.dbSet(window.dbRef(window.database, `groups/${group.parent}`), parent);
-                    }
-                }
-
-                // Usuń grupę
-                await window.dbRemove(window.dbRef(window.database, `groups/${groupId}`));
-                
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd:', error);
-                alert('❌ Błąd podczas usuwania grupy!');
-            }
-        }
-
-        // ========================================
-        // PRZENOSZENIE LINII MIĘDZY GRUPAMI
-        // ========================================
-
-        function openMoveModal(routeId) {
-            moveRouteId = routeId;
-            const modal = document.getElementById('moveToGroupModal');
-            const listDiv = document.getElementById('groupSelectionList');
-            
-            listDiv.innerHTML = '';
-
-            // Opcja: bez grupy
-            const noGroupBtn = document.createElement('button');
-            noGroupBtn.className = 'btn-secondary';
-            noGroupBtn.style.width = '100%';
-            noGroupBtn.style.marginBottom = '10px';
-            noGroupBtn.textContent = '📌 Przenieś poza grupy';
-            noGroupBtn.onclick = () => moveRouteToGroup(null);
-            listDiv.appendChild(noGroupBtn);
-
-            // Wszystkie grupy
-            Object.entries(groups).forEach(([id, group]) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-primary';
-                btn.style.width = '100%';
-                btn.style.marginBottom = '10px';
-                btn.textContent = `📁 ${group.name}`;
-                btn.onclick = () => moveRouteToGroup(id);
-                listDiv.appendChild(btn);
-            });
-
-            modal.classList.add('active');
-        }
-
-        function closeMoveModal() {
-            document.getElementById('moveToGroupModal').classList.remove('active');
-            moveRouteId = null;
-        }
-
-        async function moveRouteToGroup(groupId) {
-            if (!moveRouteId) return;
-
-            try {
-                const route = routes[moveRouteId];
-                const oldParent = route.parentGroup;
-
-                // Usuń ze starej grupy
-                if (oldParent) {
-                    const oldParentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${oldParent}`));
-                    if (oldParentSnapshot.exists()) {
-                        const parent = oldParentSnapshot.val();
-                        parent.children = (parent.children || []).filter(id => id !== moveRouteId);
-                        await window.dbSet(window.dbRef(window.database, `groups/${oldParent}`), parent);
-                    }
-                }
-
-                // Dodaj do nowej grupy
-                if (groupId) {
-                    const newParentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${groupId}`));
-                    if (newParentSnapshot.exists()) {
-                        const parent = newParentSnapshot.val();
-                        parent.children = parent.children || [];
-                        parent.children.push(moveRouteId);
-                        await window.dbSet(window.dbRef(window.database, `groups/${groupId}`), parent);
-                    }
-                }
-
-                // Zaktualizuj linię
-                await window.dbSet(window.dbRef(window.database, `routes/${moveRouteId}/parentGroup`), groupId);
-
-                closeMoveModal();
-                alert('✅ Linia przeniesiona!');
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd:', error);
-                alert('❌ Błąd podczas przenoszenia!');
-            }
-        }
-
-        // ========================================
-        // RESZTA KODU (ZEGAR, DODAWANIE, EDYCJA)
-        // ========================================
-
-        function updateClock() {
+        function updateModalTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            
-            document.getElementById('clockTime').textContent = `${hours}:${minutes}:${seconds}`;
-            
-            const days = ['Nie', 'Pon', 'Wto', 'Śro', 'Czw', 'Pią', 'Sob'];
-            const months = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru'];
-            const dayName = days[now.getDay()];
-            const day = now.getDate();
-            const month = months[now.getMonth()];
-            const year = now.getFullYear();
-            
-            document.getElementById('clockDate').textContent = `${dayName}, ${day} ${month} ${year}`;
+            document.getElementById('modalStartTime').value = `${hours}:${minutes}`;
         }
 
-        updateClock();
-        clockInterval = setInterval(updateClock, 1000);
-
-        function playDepartSound() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+        // Przełączanie zakładek
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
         }
 
-        function vibrate() {
-            if (navigator.vibrate) {
-                navigator.vibrate(200);
+        // ===== FOLDERY =====
+        function createFolder() {
+            const name = document.getElementById('newFolderName').value.trim();
+            if (!name) {
+                alert('Podaj nazwę folderu!');
+                return;
+            }
+
+            const folder = {
+                id: Date.now(),
+                name: name
+            };
+
+            folders.push(folder);
+            saveFolders();
+            displayLines();
+            document.getElementById('newFolderName').value = '';
+        }
+
+        function deleteFolder(folderId) {
+            if (!confirm('Czy na pewno usunąć folder? Linie zostaną przeniesione do "Bez folderu".')) return;
+
+            lines.forEach(line => {
+                if (line.folderId === folderId) {
+                    delete line.folderId;
+                }
+            });
+
+            folders = folders.filter(f => f.id !== folderId);
+            saveFolders();
+            saveLines();
+            displayLines();
+        }
+
+        function renameFolder(folderId) {
+            const folder = folders.find(f => f.id === folderId);
+            if (!folder) return;
+
+            const newName = prompt('Nowa nazwa folderu:', folder.name);
+            if (!newName || newName.trim() === '') return;
+
+            folder.name = newName.trim();
+            saveFolders();
+            displayLines();
+        }
+
+        function saveFolders() {
+            // Zapisz do localStorage (backup)
+            localStorage.setItem('busFolders', JSON.stringify(folders));
+            // Zapisz do Firebase
+            saveFoldersToFirebase();
+        }
+
+        function loadFolders() {
+            // Ta funkcja jest teraz obsługiwana przez initializeData()
+        }
+
+        function showFolderAssignModal(lineId) {
+            pendingFolderLineId = lineId;
+            const select = document.getElementById('folderSelect');
+            
+            let html = '<option value="">Brak folderu</option>';
+            folders.forEach(folder => {
+                html += `<option value="${folder.id}">${folder.name}</option>`;
+            });
+            select.innerHTML = html;
+
+            const line = lines.find(l => l.id === lineId);
+            if (line && line.folderId) {
+                select.value = line.folderId;
+            }
+
+            document.getElementById('folderAssignModal').classList.add('show');
+        }
+
+        function closeFolderAssignModal() {
+            document.getElementById('folderAssignModal').classList.remove('show');
+            pendingFolderLineId = null;
+        }
+
+        function confirmFolderAssign() {
+            const folderId = document.getElementById('folderSelect').value;
+            const line = lines.find(l => l.id === pendingFolderLineId);
+            
+            if (line) {
+                if (folderId) {
+                    line.folderId = parseInt(folderId);
+                } else {
+                    delete line.folderId;
+                }
+                saveLines();
+                displayLines();
+            }
+
+            closeFolderAssignModal();
+        }
+
+        // ===== IMPORT Z JSON =====
+        function importFromJSON() {
+            const jsonText = document.getElementById('jsonImportInput').value.trim();
+            
+            if (!jsonText) {
+                alert('Wklej dane JSON!');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(jsonText);
+                
+                if (!data.Line || !data.Stops || !Array.isArray(data.Stops)) {
+                    alert('Nieprawidłowy format JSON! Wymagane pola: Line, Stops (tablica)');
+                    return;
+                }
+
+                if (data.Stops.length < 2) {
+                    alert('Linia musi mieć co najmniej 2 przystanki!');
+                    return;
+                }
+
+                importedData = {
+                    line: data.Line,
+                    destination: data.Destination || '',
+                    stops: data.Stops.map((stopName, index) => ({
+                        name: stopName,
+                        time: index === 0 ? 0 : 1
+                    }))
+                };
+
+                showImportEditModal();
+
+            } catch (error) {
+                alert('Błąd parsowania JSON! Sprawdź format danych.\n\n' + error.message);
             }
         }
 
-        document.addEventListener('keydown', function(event) {
+        function showImportEditModal() {
+            if (!importedData) return;
+
+            document.getElementById('importLineName').value = importedData.line;
+            document.getElementById('importDestination').value = importedData.destination;
+
+            const container = document.getElementById('importStopsContainer');
+            let html = '';
+
+            importedData.stops.forEach((stop, index) => {
+                html += `
+                    <div class="stop-item">
+                        <div class="stop-info">
+                            <div class="stop-name">${index + 1}. ${stop.name}</div>
+                        </div>
+                        <input type="number" 
+                               class="stop-time-input" 
+                               id="importTime${index}" 
+                               value="${stop.time}" 
+                               min="0"
+                               ${index === 0 ? 'disabled' : ''}>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('importEditModal').classList.add('show');
+        }
+
+        function closeImportEditModal() {
+            document.getElementById('importEditModal').classList.remove('show');
+            importedData = null;
+        }
+
+        function confirmImport() {
+            if (!importedData) return;
+
+            importedData.stops.forEach((stop, index) => {
+                const input = document.getElementById(`importTime${index}`);
+                if (input) {
+                    stop.time = parseInt(input.value) || (index === 0 ? 0 : 1);
+                }
+            });
+
+            let lineName = importedData.line;
+            if (importedData.destination) {
+                lineName += ` → ${importedData.destination}`;
+            }
+
+            const line = {
+                id: Date.now(),
+                name: lineName,
+                stops: [...importedData.stops]
+            };
+
+            lines.push(line);
+            saveLines();
+            displayLines();
+
+            closeImportEditModal();
+            document.getElementById('jsonImportInput').value = '';
+            
+            alert('✅ Linia została zaimportowana i zapisana!');
+            switchTab('lines');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+        }
+
+        // ===== PRZYSTANKI =====
+        function handleStopEnter(event) {
             if (event.key === 'Enter') {
-                if (document.querySelector('.running-screen').classList.contains('active')) {
-                    event.preventDefault();
-                    departStop();
-                }
-                else if (event.target.id === 'stopName' || event.target.id === 'stopMinutes') {
-                    event.preventDefault();
-                    addStop();
-                }
-            }
-            
-            if (event.code === 'Space') {
-                if (document.querySelector('.running-screen').classList.contains('active')) {
-                    event.preventDefault();
-                    departStop();
-                }
-                else if (event.target.id === 'stopMinutes') {
-                    event.preventDefault();
-                    addStop();
-                }
-            }
-            
-            if (event.key === 'ArrowLeft' && document.querySelector('.running-screen').classList.contains('active')) {
                 event.preventDefault();
-                previousStop();
+                addStop();
             }
-            
-            if (event.key === 'ArrowRight' && document.querySelector('.running-screen').classList.contains('active')) {
-                event.preventDefault();
-                departStop();
-            }
-            
-            if (event.key === 'Escape' && document.querySelector('.running-screen').classList.contains('active')) {
-                event.preventDefault();
-                if (confirm('Czy na pewno zakończyć trasę?')) {
-                    endRoute();
-                }
-            }
-        });
+        }
 
         function addStop() {
             const name = document.getElementById('stopName').value.trim();
-            const minutes = parseInt(document.getElementById('stopMinutes').value) || 0;
+            const time = parseInt(document.getElementById('stopTime').value) || 1;
 
             if (!name) {
-                alert('❌ Podaj nazwę przystanku!');
+                alert('Podaj nazwę przystanku!');
                 return;
             }
 
-            stops.push({ name, minutes });
+            currentStops.push({ name, time });
             document.getElementById('stopName').value = '';
-            document.getElementById('stopMinutes').value = '1';
+            document.getElementById('stopTime').value = '1';
             document.getElementById('stopName').focus();
-            
-            renderStopList();
+            displayCurrentStops();
         }
 
-        function renderStopList() {
-            const editor = document.getElementById('stopsEditor');
+        function displayCurrentStops() {
+            const container = document.getElementById('stopsContainer');
+            const currentStopsDiv = document.getElementById('currentStops');
             
-            if (stops.length === 0) {
-                editor.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🚏</div>
-                        <p>Dodaj przystanki aby utworzyć trasę</p>
-                    </div>
-                `;
+            if (currentStops.length === 0) {
+                currentStopsDiv.style.display = 'none';
                 return;
             }
 
-            editor.innerHTML = '';
-            
-            stops.forEach((stop, index) => {
-                const div = document.createElement('div');
-                div.className = 'stop-item';
-                div.draggable = true;
-                div.dataset.index = index;
-                
-                let timeInfo = index === 0 ? 'START' : `+${stop.minutes} min`;
-                let totalTime = stops.slice(0, index + 1).reduce((sum, s) => sum + s.minutes, 0);
-                
-                div.innerHTML = `
-                    <div class="stop-number">${index + 1}</div>
-                    <div class="stop-info">
-                        <div class="stop-name">${stop.name}</div>
-                        <div class="stop-time">Suma: ${totalTime} min od startu</div>
+            currentStopsDiv.style.display = 'block';
+            let html = '';
+            let totalTime = 0;
+
+            currentStops.forEach((stop, index) => {
+                totalTime += stop.time;
+                html += `
+                    <div class="stop-item">
+                        <div class="stop-info">
+                            ${editMode ? `
+                                <input type="text" 
+                                       class="stop-name-input" 
+                                       id="stopNameEdit${index}" 
+                                       value="${stop.name}">
+                                <div class="stop-time">
+                                    Czas: <input type="number" 
+                                                 class="stop-time-input" 
+                                                 id="stopTimeEdit${index}" 
+                                                 value="${stop.time}" 
+                                                 min="0"
+                                                 ${index === 0 ? 'disabled' : ''}>
+                                    min | Łącznie: ${totalTime} min
+                                </div>
+                            ` : `
+                                <div class="stop-name">${index + 1}. ${stop.name}</div>
+                                <div class="stop-time">
+                                    ${index === 0 ? 'START' : `+${stop.time} min od poprzedniego`} | Łącznie: ${totalTime} min od startu
+                                </div>
+                            `}
+                        </div>
+                        <div class="stop-actions">
+                            ${editMode && index > 0 ? `<button class="small" onclick="moveStopUp(${index})">⬆️</button>` : ''}
+                            ${editMode && index < currentStops.length - 1 ? `<button class="small" onclick="moveStopDown(${index})">⬇️</button>` : ''}
+                            <button class="danger small" onclick="removeStop(${index})">🗑️</button>
+                        </div>
                     </div>
-                    <div class="stop-duration">${timeInfo}</div>
-                    <button class="btn-secondary btn-icon" onclick="editStop(${index})">✏️</button>
-                    <button class="btn-danger btn-icon" onclick="removeStop(${index})">🗑️</button>
                 `;
-                
-                div.addEventListener('dragstart', handleDragStart);
-                div.addEventListener('dragover', handleDragOver);
-                div.addEventListener('drop', handleDrop);
-                div.addEventListener('dragend', handleDragEnd);
-                
-                editor.appendChild(div);
             });
-        }
 
-        let draggedElement = null;
-
-        function handleDragStart(e) {
-            draggedElement = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-
-            if (draggedElement !== this) {
-                const fromIndex = parseInt(draggedElement.dataset.index);
-                const toIndex = parseInt(this.dataset.index);
-                
-                const item = stops.splice(fromIndex, 1)[0];
-                stops.splice(toIndex, 0, item);
-                
-                renderStopList();
-            }
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-        }
-
-        function editStop(index) {
-            const stop = stops[index];
-            const newName = prompt('Nowa nazwa przystanku:', stop.name);
-            if (newName && newName.trim()) {
-                stop.name = newName.trim();
-            }
-            
-            if (index > 0) {
-                const newMinutes = prompt('Minut od poprzedniego:', stop.minutes);
-                if (newMinutes !== null) {
-                    stop.minutes = parseInt(newMinutes) || 0;
-                }
-            }
-            
-            renderStopList();
+            container.innerHTML = html;
         }
 
         function removeStop(index) {
-            stops.splice(index, 1);
-            renderStopList();
+            currentStops.splice(index, 1);
+            displayCurrentStops();
         }
 
-        async function saveRoute() {
-            const lineNumber = document.getElementById('lineNumber').value.trim();
-            const direction = document.getElementById('direction').value.trim();
+        function moveStopUp(index) {
+            if (index === 0) return;
+            [currentStops[index], currentStops[index - 1]] = [currentStops[index - 1], currentStops[index]];
+            displayCurrentStops();
+        }
 
-            if (!lineNumber || !direction) {
-                alert('❌ Podaj numer linii i kierunek!');
+        function moveStopDown(index) {
+            if (index === currentStops.length - 1) return;
+            [currentStops[index], currentStops[index + 1]] = [currentStops[index + 1], currentStops[index]];
+            displayCurrentStops();
+        }
+
+        function updateStopsFromInputs() {
+            currentStops.forEach((stop, index) => {
+                const nameInput = document.getElementById(`stopNameEdit${index}`);
+                const timeInput = document.getElementById(`stopTimeEdit${index}`);
+                
+                if (nameInput) stop.name = nameInput.value.trim();
+                if (timeInput) stop.time = parseInt(timeInput.value) || (index === 0 ? 0 : 1);
+            });
+        }
+
+        // ===== LINIE =====
+        function saveLine() {
+            const name = document.getElementById('lineName').value.trim();
+
+            if (!name) {
+                alert('Podaj nazwę linii!');
                 return;
             }
 
-            if (stops.length < 2) {
-                alert('❌ Dodaj co najmniej 2 przystanki!');
+            if (currentStops.length < 2) {
+                alert('Dodaj co najmniej 2 przystanki!');
                 return;
             }
 
-            const route = {
-                lineNumber,
-                direction,
-                stops: [...stops],
-                parentGroup: null,
-                created: new Date().toISOString()
+            if (editMode) {
+                updateStopsFromInputs();
+            }
+
+            const line = {
+                id: editMode ? editLineId : Date.now(),
+                name,
+                stops: [...currentStops]
             };
 
-            try {
-                const routesRef = window.dbPush(window.dbRef(window.database, 'routes'));
-                await window.dbSet(routesRef, route);
-                
-                alert('✅ Linia zapisana pomyślnie!');
-                stops = [];
-                document.getElementById('lineNumber').value = '';
-                document.getElementById('direction').value = '';
-                renderStopList();
-                
-                // Ukryj formularz
-                toggleAddForm();
-                
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd zapisu:', error);
-                alert('❌ Błąd podczas zapisu!');
+            if (editMode) {
+                const index = lines.findIndex(l => l.id === editLineId);
+                if (index !== -1) {
+                    line.folderId = lines[index].folderId;
+                    lines[index] = line;
+                }
+                editMode = false;
+                editLineId = null;
+            } else {
+                lines.push(line);
             }
+
+            saveLines();
+            
+            document.getElementById('lineName').value = '';
+            currentStops = [];
+            displayCurrentStops();
+            displayLines();
+
+            alert('✅ Linia została zapisana!');
+            switchTab('lines');
+            document.querySelectorAll('.tab')[0].classList.add('active');
         }
 
-        async function editRoute(id) {
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
-                if (!snapshot.exists()) return;
+        function saveLines() {
+            // Zapisz do localStorage (backup)
+            localStorage.setItem('busLines', JSON.stringify(lines));
+            // Zapisz do Firebase
+            saveLinesToFirebase();
+        }
 
-                const route = snapshot.val();
+        function loadLines() {
+            // Ta funkcja jest teraz obsługiwana przez initializeData()
+        }
+
+        function displayLines() {
+            const container = document.getElementById('linesList');
+            
+            if (lines.length === 0 && folders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Brak Linii</h3>
+                        <p>Przejdź do zakładki "Tworzenie Linii" aby utworzyć pierwszą linię</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            const linesWithoutFolder = lines.filter(l => !l.folderId);
+            if (linesWithoutFolder.length > 0) {
+                html += '<div class="folder-section">';
+                html += '<div class="folder-header"><h3>📋 Bez Folderu</h3></div>';
+                html += '<div class="lines-list">';
+                linesWithoutFolder.forEach(line => {
+                    html += generateLineCard(line);
+                });
+                html += '</div></div>';
+            }
+
+            folders.forEach(folder => {
+                const folderLines = lines.filter(l => l.folderId === folder.id);
+                html += '<div class="folder-section">';
+                html += `
+                    <div class="folder-header">
+                        <h3>📁 ${folder.name} (${folderLines.length})</h3>
+                        <div class="folder-controls">
+                            <button class="warning small" onclick="renameFolder(${folder.id})">✏️ Zmień nazwę</button>
+                            <button class="danger small" onclick="deleteFolder(${folder.id})">🗑️ Usuń folder</button>
+                        </div>
+                    </div>
+                `;
                 
-                stops = [...route.stops];
-                document.getElementById('lineNumber').value = route.lineNumber;
-                document.getElementById('direction').value = route.direction;
-                renderStopList();
-                
-                editingRouteId = id;
-                
-                // Pokaż formularz
-                if (!document.getElementById('quickAddForm').classList.contains('active')) {
-                    toggleAddForm();
+                if (folderLines.length > 0) {
+                    html += '<div class="lines-list">';
+                    folderLines.forEach(line => {
+                        html += generateLineCard(line);
+                    });
+                    html += '</div>';
                 }
                 
-                const saveBtn = document.getElementById('saveRouteBtn');
-                saveBtn.textContent = '💾 Zapisz zmiany';
-                saveBtn.onclick = () => updateRoute(id);
-                
-                alert('✏️ Trasa załadowana do edycji. Po zakończeniu kliknij "Zapisz zmiany".');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (error) {
-                console.error('Błąd edycji:', error);
-                alert('❌ Błąd podczas ładowania trasy!');
-            }
-        }
-
-        async function updateRoute(id) {
-            const lineNumber = document.getElementById('lineNumber').value.trim();
-            const direction = document.getElementById('direction').value.trim();
-
-            if (!lineNumber || !direction) {
-                alert('❌ Podaj numer linii i kierunek!');
-                return;
-            }
-
-            if (stops.length < 2) {
-                alert('❌ Dodaj co najmniej 2 przystanki!');
-                return;
-            }
-
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
-                const existingRoute = snapshot.val();
-
-                const route = {
-                    lineNumber,
-                    direction,
-                    stops: [...stops],
-                    parentGroup: existingRoute.parentGroup || null,
-                    created: existingRoute.created || new Date().toISOString()
-                };
-
-                await window.dbSet(window.dbRef(window.database, `routes/${id}`), route);
-                
-                alert('✅ Linia zaktualizowana pomyślnie!');
-                
-                stops = [];
-                document.getElementById('lineNumber').value = '';
-                document.getElementById('direction').value = '';
-                renderStopList();
-                editingRouteId = null;
-                
-                const saveBtn = document.getElementById('saveRouteBtn');
-                saveBtn.textContent = '💾 Zapisz linię do Firebase';
-                saveBtn.onclick = saveRoute;
-                
-                // Ukryj formularz
-                toggleAddForm();
-                
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd zapisu:', error);
-                alert('❌ Błąd podczas zapisu!');
-            }
-        }
-
-        async function deleteRoute(id) {
-            if (!confirm('🗑️ Czy na pewno usunąć tę linię?')) return;
-            
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${id}`));
-                if (!snapshot.exists()) return;
-
-                const route = snapshot.val();
-
-                // Usuń z grupy rodzica
-                if (route.parentGroup) {
-                    const parentSnapshot = await window.dbGet(window.dbRef(window.database, `groups/${route.parentGroup}`));
-                    if (parentSnapshot.exists()) {
-                        const parent = parentSnapshot.val();
-                        parent.children = (parent.children || []).filter(childId => childId !== id);
-                        await window.dbSet(window.dbRef(window.database, `groups/${route.parentGroup}`), parent);
-                    }
-                }
-
-                await window.dbRemove(window.dbRef(window.database, `routes/${id}`));
-                loadGroups();
-            } catch (error) {
-                console.error('Błąd usuwania:', error);
-            }
-        }
-
-        async function startRoute(routeId) {
-            try {
-                const snapshot = await window.dbGet(window.dbRef(window.database, `routes/${routeId}`));
-                if (!snapshot.exists()) return;
-
-                selectedRouteId = routeId;
-                currentRoute = snapshot.val();
-                
-                const now = new Date();
-                document.getElementById('hourInput').value = String(now.getHours()).padStart(2, '0');
-                document.getElementById('minuteInput').value = String(now.getMinutes()).padStart(2, '0');
-                document.getElementById('timeModal').classList.add('active');
-                
-            } catch (error) {
-                console.error('Błąd startu trasy:', error);
-            }
-        }
-
-        function setCurrentTime() {
-            const now = new Date();
-            document.getElementById('hourInput').value = String(now.getHours()).padStart(2, '0');
-            document.getElementById('minuteInput').value = String(now.getMinutes()).padStart(2, '0');
-        }
-
-        function confirmStartTime() {
-            const hours = parseInt(document.getElementById('hourInput').value) || 0;
-            const minutes = parseInt(document.getElementById('minuteInput').value) || 0;
-
-            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-                alert('❌ Nieprawidłowy czas!');
-                return;
-            }
-
-            const startDate = new Date();
-            startDate.setHours(hours, minutes, 0, 0);
-            
-            plannedTimes = [];
-            let cumulativeMinutes = 0;
-            
-            currentRoute.stops.forEach(stop => {
-                const plannedTime = new Date(startDate.getTime() + cumulativeMinutes * 60000);
-                plannedTimes.push(plannedTime);
-                cumulativeMinutes += stop.minutes;
+                html += '</div>';
             });
+
+            container.innerHTML = html;
+        }
+
+        function generateLineCard(line) {
+            const totalTime = line.stops.reduce((sum, stop) => sum + stop.time, 0);
+            return `
+                <div class="line-card">
+                    <h3>🚍 Linia ${line.name}</h3>
+                    <p>📍 <strong>Przystanków:</strong> ${line.stops.length}</p>
+                    <p>⏱️ <strong>Czas trasy:</strong> ${totalTime} min</p>
+                    <p style="font-size: 13px; margin-top: 10px; opacity: 0.8;">
+                        ${line.stops.map(s => s.name).join(' → ')}
+                    </p>
+                    <div class="line-actions">
+                        <button class="success" onclick="showStartModal(${line.id})">▶️ Start</button>
+                        <button class="warning" onclick="editLine(${line.id})">✏️ Edytuj</button>
+                        <button onclick="showFolderAssignModal(${line.id})" style="background: #7b1fa2;">📁</button>
+                        <button class="danger" onclick="deleteLine(${line.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function deleteLine(id) {
+            if (!confirm('Czy na pewno usunąć tę linię?')) return;
+            
+            lines = lines.filter(line => line.id !== id);
+            saveLines();
+            displayLines();
+        }
+
+        function editLine(id) {
+            const line = lines.find(l => l.id === id);
+            if (!line) return;
+
+            editMode = true;
+            editLineId = id;
+
+            document.getElementById('lineName').value = line.name;
+            currentStops = JSON.parse(JSON.stringify(line.stops));
+            displayCurrentStops();
+
+            switchTab('create');
+            document.querySelectorAll('.tab')[2].classList.add('active');
+        }
+
+        // ===== START TRASY =====
+        function showStartModal(lineId) {
+            pendingLineId = lineId;
+            updateModalTime();
+            
+            const line = lines.find(l => l.id === lineId);
+            if (!line) return;
+
+            const startSelect = document.getElementById('modalStartStop');
+            const endSelect = document.getElementById('modalEndStop');
+            
+            let html = '';
+            line.stops.forEach((stop, index) => {
+                html += `<option value="${index}">${stop.name}</option>`;
+            });
+            
+            startSelect.innerHTML = html;
+            endSelect.innerHTML = html;
+            endSelect.selectedIndex = line.stops.length - 1;
+
+            document.getElementById('startModal').classList.add('show');
+        }
+
+        function closeStartModal() {
+            document.getElementById('startModal').classList.remove('show');
+            pendingLineId = null;
+        }
+
+        function confirmStartRoute() {
+            const startTime = document.getElementById('modalStartTime').value;
+            if (!startTime) {
+                alert('Podaj godzinę startu!');
+                return;
+            }
+
+            const line = lines.find(l => l.id === pendingLineId);
+            if (!line) return;
+
+            routeStartStopIndex = parseInt(document.getElementById('modalStartStop').value);
+            routeEndStopIndex = parseInt(document.getElementById('modalEndStop').value);
+
+            if (routeStartStopIndex >= routeEndStopIndex) {
+                alert('Przystanek końcowy musi być po przystanku początkowym!');
+                return;
+            }
+
+            const routeStops = line.stops.slice(routeStartStopIndex, routeEndStopIndex + 1);
+            
+            activeRouteData = {
+                name: line.name,
+                stops: routeStops
+            };
 
             currentStopIndex = 0;
-            delayHistory = [];
+            currentDelay = 0;
+            
+            passengerCount = Math.floor(Math.random() * 6);
+            
+            routeStartTime = new Date();
+            const [hours, minutes] = startTime.split(':');
+            routeStartTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-            document.getElementById('timeModal').classList.remove('active');
-            document.querySelector('.setup-screen').classList.remove('active');
-            document.querySelector('.running-screen').classList.add('active');
+            document.getElementById('noActiveRoute').style.display = 'none';
+            document.getElementById('activeRoute').style.display = 'block';
+            document.getElementById('routeTitle').textContent = `Linia ${line.name}`;
 
-            updateDisplay();
+            updateRouteDisplay();
+            buildScheduleTable();
             startTimer();
+            startClock();
+            startEventChecker();
+            showPassengerCounter();
+
+            closeStartModal();
+            switchTab('route');
+            document.querySelectorAll('.tab')[1].classList.add('active');
         }
 
-        function getCurrentDelay() {
-            const now = new Date();
-            const targetTime = plannedTimes[currentStopIndex];
-            return Math.floor((now - targetTime) / 1000);
+        function stopRoute() {
+            if (!confirm('Zakończyć kurs?')) return;
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            if (clockInterval) {
+                clearInterval(clockInterval);
+                clockInterval = null;
+            }
+            if (eventCheckInterval) {
+                clearInterval(eventCheckInterval);
+                eventCheckInterval = null;
+            }
+
+            const existingEvent = document.querySelector('.event-notification');
+            if (existingEvent) {
+                existingEvent.remove();
+            }
+
+            const existingCounter = document.querySelector('.passenger-counter');
+            if (existingCounter) {
+                existingCounter.remove();
+            }
+
+            const existingChange = document.querySelector('.passenger-change');
+            if (existingChange) {
+                existingChange.remove();
+            }
+
+            activeRouteData = null;
+            currentStopIndex = 0;
+            currentDelay = 0;
+            passengerCount = 0;
+
+            document.getElementById('noActiveRoute').style.display = 'block';
+            document.getElementById('activeRoute').style.display = 'none';
         }
 
-        function getEstimatedArrivalTime(stopIndex) {
-            if (stopIndex < currentStopIndex) {
-                return null;
-            }
-            
-            let minutesFromNow = 0;
-            for (let i = currentStopIndex; i <= stopIndex; i++) {
-                minutesFromNow += currentRoute.stops[i].minutes;
-            }
-            
-            const now = new Date();
-            const estimatedTime = new Date(now.getTime() + minutesFromNow * 60000);
-            const plannedTime = plannedTimes[stopIndex];
-            
-            const diffSeconds = Math.abs(estimatedTime - plannedTime) / 1000;
-            if (diffSeconds < 30) {
-                return null;
-            }
-            
-            return estimatedTime;
+        // ===== LICZNIK PASAŻERÓW =====
+        function showPassengerCounter() {
+            const existing = document.querySelector('.passenger-counter');
+            if (existing) existing.remove();
+
+            const counter = document.createElement('div');
+            counter.className = 'passenger-counter';
+            counter.innerHTML = `
+                <div class="passenger-count">👥 ${passengerCount}</div>
+                <div class="passenger-label">Pasażerów</div>
+            `;
+
+            document.body.appendChild(counter);
+            updatePassengerCounterColor();
         }
 
-        function updateDisplay() {
-            document.getElementById('lineInfo').textContent = 
-                `LINIA ${currentRoute.lineNumber} → ${currentRoute.direction.toUpperCase()}`;
-            
-            document.getElementById('currentStopName').textContent = 
-                currentRoute.stops[currentStopIndex].name.toUpperCase();
+        function updatePassengerCounter() {
+            const counter = document.querySelector('.passenger-counter');
+            if (!counter) return;
 
-            const total = currentRoute.stops.length;
-            const progress = Math.round((currentStopIndex / (total - 1)) * 100);
-            
-            document.getElementById('stopCounter').textContent = `${currentStopIndex + 1}/${total}`;
-            document.getElementById('routeProgress').textContent = `${progress}%`;
-            document.getElementById('progressBar').style.width = `${progress}%`;
-
-            if (delayHistory.length > 0) {
-                const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
-                const avgMin = Math.floor(Math.abs(avgDelay) / 60);
-                const avgSec = Math.abs(avgDelay) % 60;
-                const sign = avgDelay >= 0 ? '-' : '+';
-                document.getElementById('avgDelay').textContent = 
-                    `${sign}${avgMin}:${String(avgSec).padStart(2, '0')}`;
-            } else {
-                document.getElementById('avgDelay').textContent = '0:00';
-            }
-
-            document.getElementById('prevBtn').disabled = (currentStopIndex === 0);
-
-            updateETA();
-            renderSchedule();
-            scrollToCurrentStop();
+            counter.querySelector('.passenger-count').textContent = `👥 ${passengerCount}`;
+            updatePassengerCounterColor();
         }
 
-        function updateETA() {
-            const lastStopIndex = plannedTimes.length - 1;
-            const estimatedTime = getEstimatedArrivalTime(lastStopIndex);
-            
-            if (estimatedTime) {
-                const hours = String(estimatedTime.getHours()).padStart(2, '0');
-                const minutes = String(estimatedTime.getMinutes()).padStart(2, '0');
-                document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
-            } else {
-                const plannedTime = plannedTimes[lastStopIndex];
-                const hours = String(plannedTime.getHours()).padStart(2, '0');
-                const minutes = String(plannedTime.getMinutes()).padStart(2, '0');
-                document.getElementById('etaTime').textContent = `${hours}:${minutes}`;
+        function updatePassengerCounterColor() {
+            const counter = document.querySelector('.passenger-counter');
+            if (!counter) return;
+
+            counter.classList.remove('warning', 'danger');
+
+            if (passengerCount >= 90) {
+                counter.classList.add('danger');
+            } else if (passengerCount >= 70) {
+                counter.classList.add('warning');
             }
         }
 
-        function scrollToCurrentStop() {
-            setTimeout(() => {
-                const scheduleList = document.getElementById('scheduleList');
-                const currentItem = scheduleList.querySelector('.schedule-item.current');
-                
-                if (currentItem && scheduleList) {
-                    currentItem.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
+        function calculatePassengerChange() {
+            const totalStops = activeRouteData.stops.length;
+            const progress = currentStopIndex / (totalStops - 1);
+
+            let exiting = 0;
+            let entering = 0;
+
+            if (currentStopIndex === totalStops - 1) {
+                exiting = passengerCount;
+                entering = 0;
+            }
+            else if (currentStopIndex < 3) {
+                exiting = Math.floor(Math.random() * 3);
+                entering = 5 + Math.floor(Math.random() * 8);
+            }
+            else if (currentStopIndex >= totalStops - 3) {
+                exiting = 4 + Math.floor(Math.random() * 7);
+                entering = Math.floor(Math.random() * 4);
+            }
+            else {
+                exiting = 2 + Math.floor(Math.random() * 5);
+                entering = 3 + Math.floor(Math.random() * 6);
+            }
+
+            exiting = Math.min(exiting, passengerCount);
+
+            const potentialTotal = passengerCount - exiting + entering;
+            if (potentialTotal > 100) {
+                entering = 100 - (passengerCount - exiting);
+            }
+
+            passengerCount = passengerCount - exiting + entering;
+
+            showPassengerChange(exiting, entering);
+            updatePassengerCounter();
+
+            if (passengerCount >= 95 && Math.random() < 0.3) {
+                setTimeout(() => {
+                    showEvent({
+                        icon: "😤",
+                        title: "Autobus przepełniony",
+                        text: "Pasażerowie narzekają na tłok, niektórzy nie mogli wsiąść"
                     });
-                }
-            }, 200);
+                }, 2000);
+            }
         }
 
-        function renderSchedule() {
-            const scheduleDiv = document.getElementById('scheduleList');
-            scheduleDiv.innerHTML = '';
+        function showPassengerChange(exiting, entering) {
+            const existing = document.querySelector('.passenger-change');
+            if (existing) existing.remove();
 
-            currentRoute.stops.forEach((stop, index) => {
-                const div = document.createElement('div');
-                div.className = 'schedule-item';
-                
-                if (index < currentStopIndex) {
-                    div.classList.add('passed');
-                } else if (index === currentStopIndex) {
-                    div.classList.add('current');
-                } else if (index === currentStopIndex + 1) {
-                    div.classList.add('next');
-                }
+            const change = document.createElement('div');
+            change.className = 'passenger-change';
+            change.innerHTML = `
+                <div class="passenger-change-item exit">
+                    <span class="label">⬇️ Wysiadło:</span>
+                    <span class="value">${exiting}</span>
+                </div>
+                <div class="passenger-change-item enter">
+                    <span class="label">⬆️ Wsiadło:</span>
+                    <span class="value">${entering}</span>
+                </div>
+                <div class="passenger-change-item">
+                    <span class="label">👥 Łącznie:</span>
+                    <span class="value">${passengerCount}</span>
+                </div>
+            `;
 
-                const time = plannedTimes[index];
-                const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
-                
-                let estimatedTimeStr = '';
-                if (index > currentStopIndex) {
-                    const estimatedTime = getEstimatedArrivalTime(index);
-                    
-                    if (estimatedTime) {
-                        const estHours = String(estimatedTime.getHours()).padStart(2, '0');
-                        const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
-                        estimatedTimeStr = `<div class="estimated-time">~${estHours}:${estMinutes}</div>`;
-                    }
-                }
+            document.body.appendChild(change);
 
-                let delayBadge = '';
-                if (index < currentStopIndex && delayHistory[index] !== undefined) {
-                    const delay = delayHistory[index];
-                    const delayMin = Math.floor(Math.abs(delay) / 60);
-                    const delaySec = Math.abs(delay) % 60;
-                    const sign = delay >= 0 ? '-' : '+';
-                    const delayClass = delay <= -60 ? 'early' : delay < 60 ? 'on-time' : delay < 210 ? 'late' : 'very-late';
-                    delayBadge = `<div class="delay-badge ${delayClass}">${sign}${delayMin}:${String(delaySec).padStart(2, '0')}</div>`;
-                }
+            setTimeout(() => {
+                change.style.animation = 'fadeOut 0.5s';
+                setTimeout(() => change.remove(), 500);
+            }, 5000);
+        }
 
-                div.innerHTML = `
-                    <div class="schedule-stop-number">${index + 1}</div>
-                    <div class="schedule-stop-info">
-                        <div class="schedule-stop-name">${stop.name}</div>
-                        <div class="schedule-stop-time">${index > 0 ? `+${stop.minutes} min` : 'START'}</div>
-                    </div>
-                    <div class="schedule-time-info">
-                        <div class="schedule-time">${timeStr}</div>
-                        ${estimatedTimeStr}
-                    </div>
-                    ${delayBadge}
+        // ===== ZEGARY =====
+        function startClock() {
+            if (clockInterval) clearInterval(clockInterval);
+            
+            updateClocks();
+            clockInterval = setInterval(() => {
+                updateClocks();
+            }, 1000);
+        }
+
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toTimeString().substr(0, 8);
+            document.getElementById('currentTimeDisplay').textContent = timeStr;
+
+            if (activeRouteData) {
+                const totalPlannedTime = activeRouteData.stops.reduce((sum, stop) => sum + stop.time, 0);
+                const endTime = new Date(routeStartTime.getTime() + totalPlannedTime * 60000 + currentDelay * 1000);
+                const endTimeStr = endTime.toTimeString().substr(0, 8);
+                document.getElementById('endTimeDisplay').textContent = endTimeStr;
+            }
+        }
+
+        function updateRouteDisplay() {
+            if (!activeRouteData) return;
+
+            const stop = activeRouteData.stops[currentStopIndex];
+            document.getElementById('currentStopName').textContent = stop.name;
+            document.getElementById('progressInfo').textContent = 
+                `Przystanek ${currentStopIndex + 1} z ${activeRouteData.stops.length}`;
+
+            if (currentStopIndex === activeRouteData.stops.length - 1) {
+                document.getElementById('nextStopBtn').textContent = '🏁 Zakończ';
+            } else {
+                document.getElementById('nextStopBtn').textContent = '⏎ ENTER - Odjazd';
+            }
+        }
+
+        function buildScheduleTable() {
+            const tbody = document.getElementById('scheduleBody');
+            let html = '';
+            let cumulativeTime = 0;
+
+            activeRouteData.stops.forEach((stop, index) => {
+                cumulativeTime += stop.time;
+                const plannedTime = new Date(routeStartTime.getTime() + cumulativeTime * 60000);
+                const plannedTimeStr = plannedTime.toTimeString().substr(0, 5);
+
+                html += `
+                    <tr id="scheduleRow${index}">
+                        <td style="font-weight: bold;">${stop.name}</td>
+                        <td>${plannedTimeStr}</td>
+                        <td id="predictedTime${index}">---</td>
+                    </tr>
                 `;
-                scheduleDiv.appendChild(div);
             });
+
+            tbody.innerHTML = html;
         }
 
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
 
             timerInterval = setInterval(() => {
-                const now = new Date();
-                const targetTime = plannedTimes[currentStopIndex];
-                const diff = Math.floor((now - targetTime) / 1000);
-
-                const minutes = Math.floor(Math.abs(diff) / 60);
-                const seconds = Math.abs(diff) % 60;
-                
-                const sign = diff >= 0 ? '-' : '';
-                const timeStr = `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
-                
-                const timerEl = document.getElementById('timer');
-                const indicatorEl = document.getElementById('delayIndicator');
-                timerEl.textContent = timeStr;
-
-                if (diff < 60) {
-                    timerEl.style.backgroundColor = '#4CAF50';
-                    timerEl.style.color = '#fff';
-                    if (diff < 0) {
-                        indicatorEl.textContent = '✅ PRZED CZASEM';
-                    } else {
-                        indicatorEl.textContent = '✅ NA CZAS';
-                    }
-                    indicatorEl.style.color = '#4CAF50';
-                } else if (diff >= 60 && diff < 120) {
-                    timerEl.style.backgroundColor = '#FFEB3B';
-                    timerEl.style.color = '#333';
-                    indicatorEl.textContent = '⚠️ MAŁE OPÓŹNIENIE';
-                    indicatorEl.style.color = '#F9A825';
-                } else if (diff >= 120 && diff < 300) {
-                    timerEl.style.backgroundColor = '#FF9800';
-                    timerEl.style.color = '#fff';
-                    indicatorEl.textContent = '⚠️ OPÓŹNIENIE';
-                    indicatorEl.style.color = '#FF9800';
-                } else {
-                    timerEl.style.backgroundColor = '#F44336';
-                    timerEl.style.color = '#fff';
-                    indicatorEl.textContent = '🚨 DUŻE OPÓŹNIENIE';
-                    indicatorEl.style.color = '#F44336';
-                }
-
-                updateETA();
-                
-                if (seconds % 5 === 0) {
-                    updateEstimatedTimesOnly();
-                }
+                updateTimer();
+                updateScheduleTable();
+                updateClocks();
             }, 100);
         }
 
-        function updateEstimatedTimesOnly() {
-            const scheduleItems = document.querySelectorAll('.schedule-item');
+        function updateTimer() {
+            if (!activeRouteData) return;
+
+            const now = new Date();
+            const elapsedMs = now - routeStartTime;
             
-            scheduleItems.forEach((item, index) => {
-                if (index > currentStopIndex) {
-                    const timeInfo = item.querySelector('.schedule-time-info');
-                    if (!timeInfo) return;
+            let plannedTimeForCurrentStop = 0;
+            for (let i = 0; i <= currentStopIndex; i++) {
+                plannedTimeForCurrentStop += activeRouteData.stops[i].time;
+            }
+            
+            const plannedMs = plannedTimeForCurrentStop * 60000;
+            const differenceMs = elapsedMs - plannedMs;
+            currentDelay = Math.floor(differenceMs / 1000);
+
+            const absSeconds = Math.abs(currentDelay);
+            const minutes = Math.floor(absSeconds / 60);
+            const seconds = absSeconds % 60;
+            const sign = currentDelay >= 0 ? '+' : '-';
+            
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = `${sign}${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            const delayMinutes = currentDelay / 60;
+            timerElement.className = 'timer ';
+            
+            if (delayMinutes > 5) {
+                timerElement.classList.add('red');
+            } else if (delayMinutes > 2) {
+                timerElement.classList.add('orange');
+            } else if (delayMinutes > 1) {
+                timerElement.classList.add('yellow');
+            } else {
+                timerElement.classList.add('green');
+            }
+        }
+
+        function updateScheduleTable() {
+            if (!activeRouteData) return;
+
+            let cumulativeTime = 0;
+
+            activeRouteData.stops.forEach((stop, index) => {
+                cumulativeTime += stop.time;
+                const row = document.getElementById(`scheduleRow${index}`);
+                const predictedCell = document.getElementById(`predictedTime${index}`);
+
+                row.classList.remove('current-row', 'passed-row');
+
+                if (index < currentStopIndex) {
+                    row.classList.add('passed-row');
+                } else if (index === currentStopIndex) {
+                    row.classList.add('current-row');
                     
-                    const estimatedTime = getEstimatedArrivalTime(index);
-                    let estEl = timeInfo.querySelector('.estimated-time');
-                    
-                    if (estimatedTime) {
-                        const estHours = String(estimatedTime.getHours()).padStart(2, '0');
-                        const estMinutes = String(estimatedTime.getMinutes()).padStart(2, '0');
-                        const newText = `~${estHours}:${estMinutes}`;
-                        
-                        if (estEl) {
-                            if (estEl.textContent !== newText) {
-                                estEl.textContent = newText;
-                            }
-                        } else {
-                            estEl = document.createElement('div');
-                            estEl.className = 'estimated-time';
-                            estEl.textContent = newText;
-                            timeInfo.appendChild(estEl);
-                        }
-                    } else {
-                        if (estEl) {
-                            estEl.remove();
-                        }
-                    }
+                    const now = new Date();
+                    predictedCell.textContent = now.toTimeString().substr(0, 5);
+                } else {
+                    const predictedArrival = new Date(routeStartTime.getTime() + cumulativeTime * 60000 + currentDelay * 1000);
+                    predictedCell.textContent = predictedArrival.toTimeString().substr(0, 5);
                 }
             });
         }
 
-        function previousStop() {
-            if (currentStopIndex === 0) {
+        function nextStop() {
+            if (!activeRouteData) return;
+
+            if (currentStopIndex >= activeRouteData.stops.length - 1) {
+                alert('🏁 Kurs zakończony!');
+                stopRoute();
                 return;
             }
 
-            vibrate();
-            
-            currentStopIndex--;
-            
-            if (delayHistory.length > currentStopIndex) {
-                delayHistory.pop();
-            }
-
-            updateDisplay();
-        }
-
-        function departStop() {
-            if (!currentRoute) return;
-
-            if (currentStopIndex >= currentRoute.stops.length - 1) {
-                playDepartSound();
-                vibrate();
-                alert('🏁 To był ostatni przystanek!');
-                endRoute();
-                return;
-            }
-
-            const now = new Date();
-            const plannedDeparture = plannedTimes[currentStopIndex];
-            const delay = Math.floor((now - plannedDeparture) / 1000);
-            delayHistory[currentStopIndex] = delay;
-
-            playDepartSound();
-            vibrate();
+            calculatePassengerChange();
 
             currentStopIndex++;
-            updateDisplay();
+            updateRouteDisplay();
         }
 
-        function endRoute() {
-            if (timerInterval) clearInterval(timerInterval);
-            
-            if (delayHistory.length > 0) {
-                const avgDelay = Math.round(delayHistory.reduce((a, b) => a + b, 0) / delayHistory.length);
-                const avgMin = Math.floor(Math.abs(avgDelay) / 60);
-                const avgSec = Math.abs(avgDelay) % 60;
-                const sign = avgDelay >= 0 ? 'opóźnienia' : 'przed czasem';
-                
-                alert(`📊 Podsumowanie trasy:\n\nŚrednie: ${avgMin}:${String(avgSec).padStart(2, '0')} ${sign}\nPrzejechano: ${currentStopIndex + 1}/${currentRoute.stops.length} przystanków`);
+        // ===== LOSOWE WYDARZENIA =====
+        function startEventChecker() {
+            if (eventCheckInterval) clearInterval(eventCheckInterval);
+
+            eventCheckInterval = setInterval(() => {
+                const chance = Math.random() * 100;
+                if (chance < 5) {
+                    showRandomEvent();
+                }
+            }, 15000);
+        }
+
+        function showRandomEvent() {
+            const existing = document.querySelector('.event-notification');
+            if (existing) return;
+
+            const randomValue = Math.random() * totalWeight;
+            let cumulativeWeight = 0;
+            let selectedEvent = randomEvents[0];
+
+            for (const event of randomEvents) {
+                cumulativeWeight += event.weight;
+                if (randomValue <= cumulativeWeight) {
+                    selectedEvent = event;
+                    break;
+                }
             }
 
-            currentRoute = null;
-            currentStopIndex = 0;
-            plannedTimes = [];
-            delayHistory = [];
-
-            document.querySelector('.running-screen').classList.remove('active');
-            document.querySelector('.setup-screen').classList.add('active');
+            showEvent(selectedEvent);
         }
 
-        // EXPORT FUNKCJI
-        window.toggleAddForm = toggleAddForm;
-        window.addStop = addStop;
-        window.editStop = editStop;
-        window.removeStop = removeStop;
-        window.saveRoute = saveRoute;
-        window.editRoute = editRoute;
-        window.updateRoute = updateRoute;
-        window.deleteRoute = deleteRoute;
-        window.startRoute = startRoute;
-        window.setCurrentTime = setCurrentTime;
-        window.confirmStartTime = confirmStartTime;
-        window.departStop = departStop;
-        window.previousStop = previousStop;
-        window.endRoute = endRoute;
-        window.createGroup = createGroup;
-        window.createSubgroup = createSubgroup;
-        window.renameGroup = renameGroup;
-        window.deleteGroup = deleteGroup;
-        window.toggleFolder = toggleFolder;
-        window.openMoveModal = openMoveModal;
-        window.closeMoveModal = closeMoveModal;
-        window.moveRouteToGroup = moveRouteToGroup;
-		        window.clearSearch = clearSearch;
-        window.performSearch = performSearch;
+        function showEvent(event) {
+            const existing = document.querySelector('.event-notification');
+            if (existing) return;
+
+            const notification = document.createElement('div');
+            notification.className = 'event-notification';
+            notification.innerHTML = `
+                <h4>${event.icon} ${event.title}</h4>
+                <p>${event.text}</p>
+            `;
+
+            notification.onclick = () => {
+                notification.remove();
+            };
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 15000);
+        }
     </script>
 </body>
 </html>
